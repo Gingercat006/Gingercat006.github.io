@@ -1,9 +1,17 @@
 const state = {
   page: "overview",
   budgetView: "list",
+  overviewMonth: "2026-10",
   budget: {
     total: 2800,
     spent: 1846.5,
+    history: [
+      { key: "2026-05", label: "May", spent: 2140.3 },
+      { key: "2026-06", label: "June", spent: 2465.9 },
+      { key: "2026-07", label: "July", spent: 1988.4 },
+      { key: "2026-08", label: "August", spent: 2912.75 },
+      { key: "2026-09", label: "September", spent: 2015.6 }
+    ],
     categories: [
       { name: "Groceries", icon: "✳", className: "grocery", spent: 426.8, limit: 600 },
       { name: "Home & bills", icon: "⌂", className: "home", spent: 714.2, limit: 950 },
@@ -64,20 +72,35 @@ function dealsMarkup() {
     </article>`).join("");
 }
 
+// Past months are fixed sample data; the current month is whatever has been spent so far.
+function budgetMonths() {
+  return [...state.budget.history, { key: "2026-10", label: "October", spent: state.budget.spent, current: true }];
+}
+
 function overviewPage() {
-  const percentage = Math.round(state.budget.spent / state.budget.total * 100);
+  const months = budgetMonths();
+  const index = Math.max(0, months.findIndex(item => item.key === state.overviewMonth));
+  const month = months[index];
+  const previous = months[index - 1];
+  const percentage = Math.round(month.spent / state.budget.total * 100);
+  const left = state.budget.total - month.spent;
+  const change = previous ? (month.spent - previous.spent) / previous.spent * 100 : null;
+  const peak = Math.max(1, ...months.map(item => item.spent));
+  const progressNote = month.current ? (left < 0 ? "Over your plan" : "Looking good so far") : "Month closed";
+  const leftNote = left < 0 ? `${money(-left)} over budget` : `${money(left)} ${month.current ? "left to spend" : "under budget"}`;
+  const status = left < 0 ? "↘ Over budget" : month.current ? "↗ On track" : "✓ Under budget";
   return `${header("SATURDAY, OCTOBER 17", "A little more room to breathe.", "Here’s your money, all in one place.", "Add expense", "expense")}
     <div class="dashboard-grid">
       <article class="card balance-card">
-        <div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><select class="period-select" aria-label="Budget period"><option>This month⌄</option></select></div>
-        <div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} monthly budget</p>
-        <div class="balance-progress"><div class="progress-meta"><span>Looking good so far</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, percentage)}%"></div></div><div class="balance-foot"><span>${money(state.budget.total - state.budget.spent)} left to spend</span><strong>↗ On track</strong></div></div>
+        <div class="balance-top"><span class="eyebrow">${month.label.toUpperCase()} SPENDING</span><select class="period-select" id="overview-month" aria-label="Budget month">${[...months].reverse().map(item => `<option value="${item.key}"${item.key === month.key ? " selected" : ""}>${item.current ? "This month" : item.label}</option>`).join("")}</select></div>
+        <div class="balance-amount">${money(month.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} monthly budget</p>
+        <div class="balance-progress"><div class="progress-meta"><span>${progressNote}</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, percentage)}%"></div></div><div class="balance-foot"><span>${leftNote}</span><strong>${status}</strong></div></div>
       </article>
       <article class="card stat-card">
-        <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last 6 months</p></div><span class="month-change">↓ 8.4%</span></div>
-        <div class="chart-total">${money(1846.5)}<span>this month</span></div>
-        <div class="chart" aria-label="Spending chart for the last six months">${[62, 78, 57, 90, 70, 54].map((height, index) => `<div class="chart-column"><div class="chart-bar ${index === 5 ? "highlight" : ""}" style="height:${height}%"></div></div>`).join("")}</div>
-        <div class="chart-labels"><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div>
+        <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last 6 months</p></div>${change === null ? "" : `<span class="month-change${change > 0 ? " up" : ""}" title="Compared with ${previous.label}">${change > 0 ? "↑" : "↓"} ${Math.abs(change).toFixed(1)}%</span>`}</div>
+        <div class="chart-total">${money(month.spent)}<span>${month.current ? "this month" : `in ${month.label}`}</span></div>
+        <div class="chart" aria-label="Spending chart for the last six months">${months.map(item => `<div class="chart-column"><div class="chart-bar ${item.key === month.key ? "highlight" : ""}" style="height:${Math.round(item.spent / peak * 90)}%"></div></div>`).join("")}</div>
+        <div class="chart-labels">${months.map(item => `<span>${item.label.slice(0, 3)}</span>`).join("")}</div>
       </article>
       <section>
         <div class="section-heading"><h2>Your budget, at a glance</h2><button class="text-link" data-page="budget">All categories ↗</button></div>
@@ -560,6 +583,13 @@ document.addEventListener("click", event => {
   }
   const actionButton = event.target.closest("[data-action]");
   if (actionButton) handleAction(actionButton.dataset.action, actionButton);
+});
+
+content.addEventListener("change", event => {
+  if (event.target.id !== "overview-month") return;
+  state.overviewMonth = event.target.value;
+  render();
+  document.querySelector("#overview-month")?.focus();
 });
 
 content.addEventListener("input", event => {
