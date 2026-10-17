@@ -39,6 +39,7 @@ Make sure `index.html`, `styles.css`, and `app.js` are all together in the same 
 
 - Navigate between Overview, Budget, Deals & rewards, Trips & goals, Shared home, Money owed, and Money sidekick.
 - Add expenses and IOU notes; changes update the current page in memory.
+- On the Budget page, switch between the category list and a money-flow chart. Move the cursor over the chart to magnify the streams nearest to it, click a stream to follow it on its own, and change the numbers below the chart to see it update.
 - Save and unsave sample deals.
 - Use the mobile menu on smaller screens.
 - Try the sample assistant cards to see example responses.
