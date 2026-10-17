@@ -48,8 +48,8 @@ function header(eyebrow, title, note, actionLabel, actionType) {
 
 function categoriesMarkup(compact = false) {
   return `<div class="category-list">${state.budget.categories.map(item => `
-    <div class="category-row">
-      <span class="category-icon ${item.className}">${item.icon}</span>
+    <div class="category-row ${item.className}">
+      <span class="category-icon">${item.icon}</span>
       <div class="category-info"><div class="category-name-row"><span class="category-name">${escapeHTML(item.name)}</span><span class="category-spend">${money(item.spent)}</span></div><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>
       <span class="category-limit">${money(item.limit)}${compact ? "" : " limit"}</span>
     </div>`).join("")}</div>`;
@@ -71,7 +71,7 @@ function overviewPage() {
       <article class="card balance-card">
         <div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><select class="period-select" aria-label="Budget period"><option>This month⌄</option></select></div>
         <div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} monthly budget</p>
-        <div class="balance-progress"><div class="progress-meta"><span>Looking good so far</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${percentage}%"></div></div><div class="balance-foot"><span>${money(state.budget.total - state.budget.spent)} left to spend</span><strong>↗ On track</strong></div></div>
+        <div class="balance-progress"><div class="progress-meta"><span>Looking good so far</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, percentage)}%"></div></div><div class="balance-foot"><span>${money(state.budget.total - state.budget.spent)} left to spend</span><strong>↗ On track</strong></div></div>
       </article>
       <article class="card stat-card">
         <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last 6 months</p></div><span class="month-change">↓ 8.4%</span></div>
@@ -103,7 +103,7 @@ function overviewPage() {
 function budgetPage() {
   const flow = state.budgetView === "flow";
   return `${header("YOUR MONEY, YOUR PACE", "Monthly budget", "A simple plan for where your money goes.", "Add expense", "expense")}
-    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Money flow</button></div>${flow ? `<span class="view-hint">Click a stream to follow it on its own. Click it again to see everything.</span>` : ""}</div>
+    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Money flow</button></div>${flow ? `<span class="view-hint">Move your cursor over the flow · click a stream to follow it</span>` : ""}</div>
     ${flow ? flowMarkup() : budgetListMarkup()}`;
 }
 
@@ -111,7 +111,7 @@ function budgetListMarkup() {
   return `<div class="view-grid"><div>
       <article class="card balance-card"><div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><span class="eyebrow">MONTHLY PLAN</span></div><div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} planned · ${money(state.budget.total - state.budget.spent)} left</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, state.budget.spent / state.budget.total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(state.budget.spent / state.budget.total * 100)}% of your monthly plan</span><strong>↗ On track</strong></div></div></article>
       <div class="section-heading"><h2>Categories</h2><button class="text-link" data-action="edit-budget">Edit monthly plan</button></div>
-      <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line"><strong>${item.icon} &nbsp;${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
+      <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line ${item.className}"><strong><span class="budget-icon">${item.icon}</span>${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
     </div><div>
       <article class="card panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>Your latest added expenses.</p></div></div>${state.transactions.map(tx => `<div class="iou-row"><span class="deal-logo">${tx.category === "Groceries" ? "✳" : tx.category === "Travel" ? "↗" : "⌂"}</span><span class="iou-copy"><strong>${escapeHTML(tx.name)}</strong><small>${escapeHTML(tx.category)} · ${escapeHTML(tx.date)}</small></span><span class="iou-amount">−${money(tx.amount)}</span></div>`).join("")}</article>
       <article class="card panel"><div class="panel-heading"><div><h2>A gentler nudge</h2><p>You're spending less than last month.</p></div><span class="deal-logo">✳</span></div><p>Your groceries are at ${money(state.budget.categories[0].spent)} this month, with plenty of room left in the plan. Nice one.</p></article>
@@ -119,7 +119,9 @@ function budgetListMarkup() {
 }
 
 // Money flow: income and savings on the left, this month in the middle, spending on the right.
-const flowView = { shown: null, selected: null, raf: 0, observer: null };
+const flowView = { shown: null, selected: null, raf: 0, observer: null, pointer: null, anchors: [], nodeW: 13 };
+// The lens scales up the blocks and labels near the cursor; at the radius edge the scale is back to 1.
+const lens = { radius: 150, maxScale: 1.5 };
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wholePounds = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const pounds = value => wholePounds.format(value);
@@ -149,16 +151,16 @@ function flowMarkup() {
   const swatch = color => `<i class="flow-swatch" style="background:${color}"></i>`;
   const row = (key, label, value, color) => `<div class="flow-row">${swatch(color)}<label for="flow-${key}">${escapeHTML(label)}</label><span class="flow-money"><span>£</span><input id="flow-${key}" data-flow-key="${key}" type="number" inputmode="decimal" min="0" step="any" value="${+value.toFixed(2)}"></span></div>`;
   const groups = [
-    ["Money in", state.budget.income.map(item => row(item.id, item.name, item.amount, "var(--flow-green)"))],
-    ["Money out", state.budget.categories.map(item => row(item.className, item.name, item.spent, `var(--flow-${item.className})`))],
-    ["Account and goal", [row("balance", "Already in your account", state.budget.balance, "var(--flow-lav)"), row("goal", "Monthly savings goal", state.budget.goal, "var(--flow-jar)")]]
+    ["Money in", state.budget.income.map(item => row(item.id, item.name, item.amount, "var(--c-income)"))],
+    ["Money out", state.budget.categories.map(item => row(item.className, item.name, item.spent, `var(--c-${item.className})`))],
+    ["Account and goal", [row("balance", "Already in your account", state.budget.balance, "var(--c-balance)"), row("goal", "Monthly savings goal", state.budget.goal, "var(--c-jar)")]]
   ];
   return `<div class="flow-view">
     <article class="card flow-card">
       <div class="flow-summary" aria-live="polite"><div class="flow-stat"><span>Money in</span><b id="flow-in"></b></div><div class="flow-stat"><span>Spent</span><b id="flow-out"></b></div><div class="flow-stat"><span>Left after spending</span><b id="flow-net"></b></div><div class="flow-chip" id="flow-chip"><i></i><span></span></div></div>
       <div class="flow-cols" aria-hidden="true"><span>Money in</span><span>This month</span><span>Money out</span></div>
       <div class="flow" id="flow"></div>
-      <div class="flow-legend"><span>${swatch("var(--flow-green)")}Income</span><span>${swatch("var(--flow-lav)")}Already in your account</span><span>${swatch("var(--flow-jar)")}Savings jar, goal met</span><span>${swatch("repeating-linear-gradient(135deg,var(--flow-ghost-t) 0 3px,var(--flow-ghost) 3px 5px)")}Savings jar, waiting until income covers it</span></div>
+      <div class="flow-legend"><span>${swatch("var(--c-income)")}Income</span><span>${swatch("var(--c-balance)")}Already in your account</span><span>${swatch("var(--c-jar)")}Savings jar, goal met</span><span>${swatch("repeating-linear-gradient(135deg,var(--ghost-bg) 0 2px,var(--ghost) 2px 4px)")}Savings jar, waiting until income covers it</span></div>
     </article>
     <article class="card panel flow-editor"><div class="panel-heading"><div><h2>Change the numbers</h2><p>The savings jar fills in with colour once this month's income minus spending reaches your goal. Until then it stays grey.</p></div></div><div class="flow-groups">${groups.map(([title, rows]) => `<div class="flow-group"><h3>${title}</h3>${rows.join("")}</div>`).join("")}</div></article>
   </div>`;
@@ -188,15 +190,15 @@ function drawFlow(d) {
   const minSlot = narrow ? 40 : 44, gap = narrow ? 8 : 10, top = 58;
 
   const left = state.budget.income.filter(item => d[item.id] > .5).sort((a, b) => d[b.id] - d[a.id])
-    .map(item => ({ id: item.id, v: d[item.id], label: item.name, fill: "var(--flow-green)", tint: "var(--flow-green-t)" }));
-  if (d.balance > .5) left.push({ id: "balance", v: d.balance, label: narrow ? "In your account" : "Already in your account", fill: "var(--flow-lav)", tint: "var(--flow-lav-t)" });
+    .map(item => ({ id: item.id, v: d[item.id], label: item.name, color: "var(--c-income)" }));
+  if (d.balance > .5) left.push({ id: "balance", v: d.balance, label: narrow ? "In your account" : "Already in your account", color: "var(--c-balance)" });
 
   const right = state.budget.categories.filter(item => d[item.className] > .5).sort((a, b) => d[b.className] - d[a.className]).map(item => {
     const v = d[item.className];
-    return { id: item.className, v, label: item.name, fill: `var(--flow-${item.className})`, tint: `var(--flow-${item.className}-t)`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of plan` : "", warn: v > item.limit };
+    return { id: item.className, v, label: item.name, color: `var(--c-${item.className})`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of plan` : "", warn: v > item.limit };
   });
-  if (remaining > .5) right.push({ id: "remain", v: remaining, label: narrow ? "Stays in account" : "Stays in your account", fill: "var(--flow-lav)", tint: "var(--flow-lav-t)" });
-  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, fill: met ? "var(--flow-jar)" : "url(#flow-hatch)", tint: met ? "var(--flow-jar-t)" : "var(--flow-ghost-t)", sub: met ? "Goal met" : `${pounds(goal - Math.max(0, net))} short` });
+  if (remaining > .5) right.push({ id: "remain", v: remaining, label: narrow ? "Stays in account" : "Stays in your account", color: "var(--c-balance)" });
+  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, color: met ? "var(--c-jar)" : "url(#flow-hatch)", sub: met ? "Goal met" : `${pounds(goal - Math.max(0, net))} short` });
 
   const place = list => {
     list.forEach(n => { n.h = Math.max(n.v * k, 3); n.slot = Math.max(n.h, minSlot); });
@@ -216,18 +218,18 @@ function drawFlow(d) {
   const cy = top + (inner - centerH) / 2;
 
   let ribs = "", nodes = "", labels = "";
-  // Ribbons use the lighter tint of each colour; every stream carries its id so it can be followed on its own.
+  // Ribbons are a translucent band of each colour; every stream carries its id so it can be followed on its own.
   let offset = cy;
   left.forEach(n => {
     const h = n.v * k;
-    ribs += `<path class="rib" data-id="${n.id}" d="${ribbon(xL + nodeW, n.y, n.y + n.h, xC, offset, offset + h)}" style="fill:${n.tint}"/>`;
+    ribs += `<path class="rib" data-id="${n.id}" d="${ribbon(xL + nodeW, n.y, n.y + n.h, xC, offset, offset + h)}" style="fill:${n.color}"/>`;
     offset += h;
   });
   offset = cy;
   right.forEach(n => {
     if (n.ghost) return;
     const h = n.v * k;
-    ribs += `<path class="rib" data-id="${n.id}" d="${ribbon(xC + centerW, offset, offset + h, xR, n.y, n.y + n.h)}" style="fill:${n.tint}"/>`;
+    ribs += `<path class="rib" data-id="${n.id}" d="${ribbon(xC + centerW, offset, offset + h, xR, n.y, n.y + n.h)}" style="fill:${n.color}"/>`;
     offset += h;
   });
 
@@ -235,7 +237,7 @@ function drawFlow(d) {
   const jar = right.find(n => n.id === "jar");
   if (jar && jar.ghost) {
     const gy = cy + C * k;
-    ribs += `<path class="rib" data-id="jar" d="${ribbon(xC + centerW, gy, gy + ghostH, xR, jar.y, jar.y + jar.h)}" style="fill:var(--flow-ghost-t)"/>`;
+    ribs += `<path class="rib" data-id="jar" d="${ribbon(xC + centerW, gy, gy + ghostH, xR, jar.y, jar.y + jar.h)}" style="fill:var(--ghost)"/>`;
     nodes += `<rect class="node" data-id="jar" x="${xC}" y="${gy}" width="${centerW}" height="${ghostH}" style="fill:url(#flow-hatch)"/>`;
   }
 
@@ -245,21 +247,33 @@ function drawFlow(d) {
     const path = side === "l"
       ? `M${x + w},${y}H${x + r}Q${x},${y} ${x},${y + r}V${y + h - r}Q${x},${y + h} ${x + r},${y + h}H${x + w}Z`
       : `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
-    return `<path class="node" data-id="${n.id}" d="${path}" style="fill:${n.fill}"/>`;
+    return `<path class="node ${side}" data-id="${n.id}" d="${path}" style="fill:${n.color}"/>`;
   };
   left.forEach(n => { nodes += block(n, xL, "l"); });
   right.forEach(n => { nodes += block(n, xR, "r"); });
-  nodes += `<rect x="${xC}" y="${cy}" width="${centerW}" height="${C * k}" style="fill:var(--flow-green)"/>`;
-  if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--flow-over)"/>`;
+  nodes += `<rect x="${xC}" y="${cy}" width="${centerW}" height="${C * k}" style="fill:var(--c-income)"/>`;
+  if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--red)"/>`;
 
-  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 8}px` : `left:${xR + nodeW + 8}px`};width:${labelW - 8}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.warn ? " warn" : ""}">${n.sub}</span>` : ""}</button>`;
+  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 2}px` : `left:${xR + nodeW + 2}px`};max-width:${labelW - 2}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.warn ? " warn" : ""}">${n.sub}</span>` : ""}</button>`;
   left.forEach(n => { labels += label(n, "l"); });
   right.forEach(n => { labels += label(n, "r"); });
   labels += `<div class="lab c" style="left:${xC + centerW / 2}px;top:${cy - 8}px"><span class="n">Available</span><span class="a">${pounds(T)}</span></div>`;
 
+  flowView.nodeW = nodeW;
+  flowView.narrow = narrow;
+  flowView.anchors = [
+    ...left.map(n => ({ id: n.id, x0: 0, x1: xL + nodeW, y0: n.cy - n.slot / 2, y1: n.cy + n.slot / 2 })),
+    ...right.map(n => ({ id: n.id, x0: xR, x1: W, y0: n.cy - n.slot / 2, y1: n.cy + n.slot / 2 }))
+  ];
+
   flow.style.height = `${H}px`;
-  flow.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Money flow: ${pounds(incSum)} income and ${pounds(d.balance)} already in your account, ${pounds(expSum)} spent, savings goal ${met ? "met" : "not yet met"}."><defs><pattern id="flow-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" style="fill:var(--flow-ghost-t)"/><rect width="2.5" height="7" style="fill:var(--flow-ghost)"/></pattern></defs><g>${ribs}</g><g>${nodes}</g></svg>${labels}`;
+  flow.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Money flow: ${pounds(incSum)} income and ${pounds(d.balance)} already in your account, ${pounds(expSum)} spent, savings goal ${met ? "met" : "not yet met"}."><defs><pattern id="flow-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" style="fill:var(--ghost-bg)"/><rect width="2.5" height="7" style="fill:var(--ghost)"/></pattern></defs><g>${ribs}</g><g>${nodes}</g></svg>${labels}`;
+  // Freshly drawn nodes take their focus and lens state without animating in.
+  flow.classList.add("drawing");
   applyFlowFocus();
+  applyLens();
+  void flow.offsetHeight;
+  flow.classList.remove("drawing");
 
   document.querySelector("#flow-in").textContent = money(incSum);
   document.querySelector("#flow-out").textContent = money(expSum);
@@ -284,6 +298,39 @@ function applyFlowFocus() {
   flow.classList.toggle("focusing", Boolean(selected));
   flow.querySelectorAll("[data-id]").forEach(node => node.classList.toggle("on", node.dataset.id === selected));
   flow.querySelectorAll("button.lab").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.id === selected)));
+}
+
+// Proximity is the distance from the cursor to each stream's block-and-label area, eased from 1 to 0 across the lens radius.
+// Blocks only grow outward from where their ribbon meets them; labels grow away from the chart and slide out with the block.
+function applyLens() {
+  const flow = document.querySelector("#flow");
+  if (!flow) return;
+  const point = flowView.pointer;
+  const scales = {};
+  if (point) flowView.anchors.forEach(area => {
+    const dx = Math.max(area.x0 - point.x, 0, point.x - area.x1);
+    const dy = Math.max(area.y0 - point.y, 0, point.y - area.y1);
+    const t = Math.max(0, 1 - Math.hypot(dx, dy) / lens.radius);
+    scales[area.id] = 1 + (lens.maxScale - 1) * t * t;
+  });
+  flow.classList.toggle("resting", !point);
+  flow.querySelectorAll(".node.l, .node.r").forEach(node => { node.style.scale = `${scales[node.dataset.id] || 1} 1`; });
+  ["l", "r"].forEach(side => {
+    const labels = [...flow.querySelectorAll(`button.lab.${side}`)]
+      .map(node => ({ node, y: parseFloat(node.style.top), h: node.offsetHeight, s: scales[node.dataset.id] || 1 }))
+      .sort((a, b) => a.y - b.y);
+    // Neighbours make room for the biggest label, like icons in a dock, so magnified text never overlaps.
+    const pivot = labels.reduce((best, label, i) => label.s > labels[best].s ? i : best, 0);
+    const room = (a, b) => (a.h * a.s + b.h * b.s) / 2 + Math.min(b.y - a.y - (a.h + b.h) / 2, 2);
+    labels.forEach(label => { label.at = label.y; });
+    for (let i = pivot + 1; i < labels.length; i++) labels[i].at = Math.max(labels[i].y, labels[i - 1].at + room(labels[i - 1], labels[i]));
+    for (let i = pivot - 1; i >= 0; i--) labels[i].at = Math.min(labels[i].y, labels[i + 1].at - room(labels[i], labels[i + 1]));
+    labels.forEach(({ node, s, y, at }) => {
+      node.style.scale = s;
+      node.style.translate = `${(s - 1) * flowView.nodeW * (side === "l" ? -1 : 1)}px calc(${at - y}px - 50%)`;
+      node.style.zIndex = Math.round(s * 100);
+    });
+  });
 }
 
 function animateFlow(next) {
@@ -315,6 +362,18 @@ function mountBudget() {
     if (event.key !== "Escape" || !flowView.selected) return;
     flowView.selected = null;
     applyFlowFocus();
+  });
+  flowView.pointer = null;
+  flow.addEventListener("pointermove", event => {
+    // Touch has no hover, and narrow charts have no room for magnified labels.
+    if (event.pointerType === "touch" || flowView.narrow) return;
+    const box = flow.getBoundingClientRect();
+    flowView.pointer = { x: event.clientX - box.left, y: event.clientY - box.top };
+    applyLens();
+  });
+  flow.addEventListener("pointerleave", () => {
+    flowView.pointer = null;
+    applyLens();
   });
   animateFlow(flowData());
   let width = flow.clientWidth;
