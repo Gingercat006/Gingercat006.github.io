@@ -2,6 +2,9 @@
 
 PennyWise is a responsive, dependency-free prototype for everyday budgeting and shared money planning. It brings budget tracking, sample grocery cashback and travel offers, holiday savings, household bills, IOU notes, and demo-only money assistant concepts into one place.
 
+https://www.canva.com/design/DAHXqBH4RYM/AgU4uyei79Aai9GXTteQdA/edit
+
+
 ## Start the website (no compiling needed)
 
 This is a static website: the browser runs the HTML, CSS, and JavaScript directly. You do not need to install Node.js, download packages, or build/compile anything.
