@@ -1,5 +1,6 @@
 const state = {
   page: "overview",
+  budgetView: "list",
   budget: {
     total: 2800,
     spent: 1846.5,
@@ -8,7 +9,14 @@ const state = {
       { name: "Home & bills", icon: "⌂", className: "home", spent: 714.2, limit: 950 },
       { name: "Travel", icon: "↗", className: "travel", spent: 285.5, limit: 500 },
       { name: "Little joys", icon: "♡", className: "fun", spent: 420, limit: 750 }
-    ]
+    ],
+    income: [
+      { id: "salary", name: "Salary", amount: 2350 },
+      { id: "side", name: "Side hustle", amount: 320 },
+      { id: "transfers", name: "Transfers in", amount: 145 }
+    ],
+    balance: 1240,
+    goal: 300
   },
   savedDeals: new Set(),
   transactions: [
@@ -93,8 +101,14 @@ function overviewPage() {
 }
 
 function budgetPage() {
+  const flow = state.budgetView === "flow";
   return `${header("YOUR MONEY, YOUR PACE", "Monthly budget", "A simple plan for where your money goes.", "Add expense", "expense")}
-    <div class="view-grid"><div>
+    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Money flow</button></div>${flow ? `<span class="view-hint">Click a stream to follow it on its own. Click it again to see everything.</span>` : ""}</div>
+    ${flow ? flowMarkup() : budgetListMarkup()}`;
+}
+
+function budgetListMarkup() {
+  return `<div class="view-grid"><div>
       <article class="card balance-card"><div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><span class="eyebrow">MONTHLY PLAN</span></div><div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} planned · ${money(state.budget.total - state.budget.spent)} left</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, state.budget.spent / state.budget.total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(state.budget.spent / state.budget.total * 100)}% of your monthly plan</span><strong>↗ On track</strong></div></div></article>
       <div class="section-heading"><h2>Categories</h2><button class="text-link" data-action="edit-budget">Edit monthly plan</button></div>
       <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line"><strong>${item.icon} &nbsp;${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
@@ -102,6 +116,214 @@ function budgetPage() {
       <article class="card panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>Your latest added expenses.</p></div></div>${state.transactions.map(tx => `<div class="iou-row"><span class="deal-logo">${tx.category === "Groceries" ? "✳" : tx.category === "Travel" ? "↗" : "⌂"}</span><span class="iou-copy"><strong>${escapeHTML(tx.name)}</strong><small>${escapeHTML(tx.category)} · ${escapeHTML(tx.date)}</small></span><span class="iou-amount">−${money(tx.amount)}</span></div>`).join("")}</article>
       <article class="card panel"><div class="panel-heading"><div><h2>A gentler nudge</h2><p>You're spending less than last month.</p></div><span class="deal-logo">✳</span></div><p>Your groceries are at ${money(state.budget.categories[0].spent)} this month, with plenty of room left in the plan. Nice one.</p></article>
     </div></div>`;
+}
+
+// Money flow: income and savings on the left, this month in the middle, spending on the right.
+const flowView = { shown: null, selected: null, raf: 0, observer: null };
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wholePounds = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const pounds = value => wholePounds.format(value);
+const ribbon = (x0, a0, b0, x1, a1, b1) => {
+  const xm = x0 + (x1 - x0) * .5;
+  return `M${x0},${a0}C${xm},${a0} ${xm},${a1} ${x1},${a1}L${x1},${b1}C${xm},${b1} ${xm},${b0} ${x0},${b0}Z`;
+};
+
+function flowData() {
+  const data = { balance: state.budget.balance, goal: state.budget.goal };
+  state.budget.income.forEach(item => { data[item.id] = item.amount; });
+  state.budget.categories.forEach(item => { data[item.className] = item.spent; });
+  return data;
+}
+
+function setFlowValue(key, value) {
+  const income = state.budget.income.find(item => item.id === key);
+  const category = state.budget.categories.find(item => item.className === key);
+  if (income) income.amount = value;
+  else if (category) {
+    category.spent = value;
+    state.budget.spent = state.budget.categories.reduce((sum, item) => sum + item.spent, 0);
+  } else if (key === "balance" || key === "goal") state.budget[key] = value;
+}
+
+function flowMarkup() {
+  const swatch = color => `<i class="flow-swatch" style="background:${color}"></i>`;
+  const row = (key, label, value, color) => `<div class="flow-row">${swatch(color)}<label for="flow-${key}">${escapeHTML(label)}</label><span class="flow-money"><span>£</span><input id="flow-${key}" data-flow-key="${key}" type="number" inputmode="decimal" min="0" step="any" value="${+value.toFixed(2)}"></span></div>`;
+  const groups = [
+    ["Money in", state.budget.income.map(item => row(item.id, item.name, item.amount, "var(--flow-green)"))],
+    ["Money out", state.budget.categories.map(item => row(item.className, item.name, item.spent, `var(--flow-${item.className})`))],
+    ["Account and goal", [row("balance", "Already in your account", state.budget.balance, "var(--flow-lav)"), row("goal", "Monthly savings goal", state.budget.goal, "var(--flow-jar)")]]
+  ];
+  return `<div class="flow-view">
+    <article class="card flow-card">
+      <div class="flow-summary" aria-live="polite"><div class="flow-stat"><span>Money in</span><b id="flow-in"></b></div><div class="flow-stat"><span>Spent</span><b id="flow-out"></b></div><div class="flow-stat"><span>Left after spending</span><b id="flow-net"></b></div><div class="flow-chip" id="flow-chip"><i></i><span></span></div></div>
+      <div class="flow-cols" aria-hidden="true"><span>Money in</span><span>This month</span><span>Money out</span></div>
+      <div class="flow" id="flow"></div>
+      <div class="flow-legend"><span>${swatch("var(--flow-green)")}Income</span><span>${swatch("var(--flow-lav)")}Already in your account</span><span>${swatch("var(--flow-jar)")}Savings jar, goal met</span><span>${swatch("repeating-linear-gradient(135deg,var(--flow-ghost-t) 0 3px,var(--flow-ghost) 3px 5px)")}Savings jar, waiting until income covers it</span></div>
+    </article>
+    <article class="card panel flow-editor"><div class="panel-heading"><div><h2>Change the numbers</h2><p>The savings jar fills in with colour once this month's income minus spending reaches your goal. Until then it stays grey.</p></div></div><div class="flow-groups">${groups.map(([title, rows]) => `<div class="flow-group"><h3>${title}</h3>${rows.join("")}</div>`).join("")}</div></article>
+  </div>`;
+}
+
+function drawFlow(d) {
+  const flow = document.querySelector("#flow");
+  if (!flow) return false;
+  const W = Math.max(300, flow.clientWidth);
+  const narrow = W < 560;
+  const labelW = Math.round(Math.min(170, Math.max(84, W * .2)));
+  const nodeW = narrow ? 9 : 13, centerW = narrow ? 12 : 18;
+  const xL = labelW, xC = Math.round(W / 2 - centerW / 2), xR = W - labelW - nodeW;
+
+  const incSum = state.budget.income.reduce((sum, item) => sum + d[item.id], 0);
+  const expSum = state.budget.categories.reduce((sum, item) => sum + d[item.className], 0);
+  const T = incSum + d.balance;
+  const net = incSum - expSum;
+  const goal = Math.max(0, d.goal);
+  const met = goal > 0 && net >= goal;
+  const saved = met ? goal : 0;
+  const remaining = Math.max(0, T - expSum - saved);
+  const over = Math.max(0, expSum - T);
+  const C = Math.max(T, expSum + saved + remaining);
+
+  const k = (narrow ? 300 : 380) / Math.max(1, C + (met ? 0 : goal));
+  const minSlot = narrow ? 40 : 44, gap = narrow ? 8 : 10, top = 58;
+
+  const left = state.budget.income.filter(item => d[item.id] > .5).sort((a, b) => d[b.id] - d[a.id])
+    .map(item => ({ id: item.id, v: d[item.id], label: item.name, fill: "var(--flow-green)", tint: "var(--flow-green-t)" }));
+  if (d.balance > .5) left.push({ id: "balance", v: d.balance, label: narrow ? "In your account" : "Already in your account", fill: "var(--flow-lav)", tint: "var(--flow-lav-t)" });
+
+  const right = state.budget.categories.filter(item => d[item.className] > .5).sort((a, b) => d[b.className] - d[a.className]).map(item => {
+    const v = d[item.className];
+    return { id: item.className, v, label: item.name, fill: `var(--flow-${item.className})`, tint: `var(--flow-${item.className}-t)`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of plan` : "", warn: v > item.limit };
+  });
+  if (remaining > .5) right.push({ id: "remain", v: remaining, label: narrow ? "Stays in account" : "Stays in your account", fill: "var(--flow-lav)", tint: "var(--flow-lav-t)" });
+  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, fill: met ? "var(--flow-jar)" : "url(#flow-hatch)", tint: met ? "var(--flow-jar-t)" : "var(--flow-ghost-t)", sub: met ? "Goal met" : `${pounds(goal - Math.max(0, net))} short` });
+
+  const place = list => {
+    list.forEach(n => { n.h = Math.max(n.v * k, 3); n.slot = Math.max(n.h, minSlot); });
+    return list.reduce((sum, n) => sum + n.slot, 0) + gap * Math.max(0, list.length - 1);
+  };
+  const hL = place(left), hR = place(right);
+  const ghostH = met ? 0 : goal * k;
+  const centerH = C * k + ghostH;
+  const inner = Math.max(hL, hR, centerH);
+  const H = Math.ceil(top + inner + 12);
+  const stack = (list, h) => {
+    let y = top + (inner - h) / 2;
+    list.forEach(n => { n.y = y + (n.slot - n.h) / 2; n.cy = y + n.slot / 2; y += n.slot + gap; });
+  };
+  stack(left, hL);
+  stack(right, hR);
+  const cy = top + (inner - centerH) / 2;
+
+  let ribs = "", nodes = "", labels = "";
+  // Ribbons use the lighter tint of each colour; every stream carries its id so it can be followed on its own.
+  let offset = cy;
+  left.forEach(n => {
+    const h = n.v * k;
+    ribs += `<path class="rib" data-id="${n.id}" d="${ribbon(xL + nodeW, n.y, n.y + n.h, xC, offset, offset + h)}" style="fill:${n.tint}"/>`;
+    offset += h;
+  });
+  offset = cy;
+  right.forEach(n => {
+    if (n.ghost) return;
+    const h = n.v * k;
+    ribs += `<path class="rib" data-id="${n.id}" d="${ribbon(xC + centerW, offset, offset + h, xR, n.y, n.y + n.h)}" style="fill:${n.tint}"/>`;
+    offset += h;
+  });
+
+  // Ghost: the part of the goal this month's income does not cover yet.
+  const jar = right.find(n => n.id === "jar");
+  if (jar && jar.ghost) {
+    const gy = cy + C * k;
+    ribs += `<path class="rib" data-id="jar" d="${ribbon(xC + centerW, gy, gy + ghostH, xR, jar.y, jar.y + jar.h)}" style="fill:var(--flow-ghost-t)"/>`;
+    nodes += `<rect class="node" data-id="jar" x="${xC}" y="${gy}" width="${centerW}" height="${ghostH}" style="fill:url(#flow-hatch)"/>`;
+  }
+
+  // Solid blocks: square where a ribbon meets them, rounded only on the outer edge.
+  const block = (n, x, side) => {
+    const r = Math.min(5, n.h / 2, nodeW / 2), y = n.y, h = n.h, w = nodeW;
+    const path = side === "l"
+      ? `M${x + w},${y}H${x + r}Q${x},${y} ${x},${y + r}V${y + h - r}Q${x},${y + h} ${x + r},${y + h}H${x + w}Z`
+      : `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+    return `<path class="node" data-id="${n.id}" d="${path}" style="fill:${n.fill}"/>`;
+  };
+  left.forEach(n => { nodes += block(n, xL, "l"); });
+  right.forEach(n => { nodes += block(n, xR, "r"); });
+  nodes += `<rect x="${xC}" y="${cy}" width="${centerW}" height="${C * k}" style="fill:var(--flow-green)"/>`;
+  if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--flow-over)"/>`;
+
+  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 8}px` : `left:${xR + nodeW + 8}px`};width:${labelW - 8}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.warn ? " warn" : ""}">${n.sub}</span>` : ""}</button>`;
+  left.forEach(n => { labels += label(n, "l"); });
+  right.forEach(n => { labels += label(n, "r"); });
+  labels += `<div class="lab c" style="left:${xC + centerW / 2}px;top:${cy - 8}px"><span class="n">Available</span><span class="a">${pounds(T)}</span></div>`;
+
+  flow.style.height = `${H}px`;
+  flow.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Money flow: ${pounds(incSum)} income and ${pounds(d.balance)} already in your account, ${pounds(expSum)} spent, savings goal ${met ? "met" : "not yet met"}."><defs><pattern id="flow-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" style="fill:var(--flow-ghost-t)"/><rect width="2.5" height="7" style="fill:var(--flow-ghost)"/></pattern></defs><g>${ribs}</g><g>${nodes}</g></svg>${labels}`;
+  applyFlowFocus();
+
+  document.querySelector("#flow-in").textContent = money(incSum);
+  document.querySelector("#flow-out").textContent = money(expSum);
+  document.querySelector("#flow-net").textContent = `${net < 0 ? "−" : ""}${money(Math.abs(net))}`;
+  const chip = document.querySelector("#flow-chip");
+  const [kind, icon, text] = over > .5 ? ["warn", "!", `Spending is ${pounds(over)} more than you have`]
+    : goal <= .5 ? ["hold", "–", "No savings goal set"]
+    : met ? ["ok", "✓", `${pounds(goal)} set aside in your Savings jar`]
+    : ["hold", "…", `${pounds(goal - Math.max(0, net))} short of your ${pounds(goal)} goal`];
+  chip.className = `flow-chip ${kind}`;
+  chip.querySelector("i").textContent = icon;
+  chip.querySelector("span").textContent = text;
+  return true;
+}
+
+// Only the selected stream stays lit: its ribbon, its block and its label. Everything else fades back.
+function applyFlowFocus() {
+  const flow = document.querySelector("#flow");
+  if (!flow) return;
+  if (flowView.selected && !flow.querySelector(`[data-id="${flowView.selected}"]`)) flowView.selected = null;
+  const selected = flowView.selected;
+  flow.classList.toggle("focusing", Boolean(selected));
+  flow.querySelectorAll("[data-id]").forEach(node => node.classList.toggle("on", node.dataset.id === selected));
+  flow.querySelectorAll("button.lab").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.id === selected)));
+}
+
+function animateFlow(next) {
+  cancelAnimationFrame(flowView.raf);
+  const from = flowView.shown;
+  if (!from || reduceMotion) {
+    flowView.shown = { ...next };
+    drawFlow(flowView.shown);
+    return;
+  }
+  const start = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - start) / 520), eased = 1 - Math.pow(1 - t, 3);
+    flowView.shown = Object.fromEntries(Object.keys(next).map(key => [key, (from[key] ?? 0) + (next[key] - (from[key] ?? 0)) * eased]));
+    if (drawFlow(flowView.shown) && t < 1) flowView.raf = requestAnimationFrame(step);
+  };
+  step(start);
+}
+
+function mountBudget() {
+  const flow = document.querySelector("#flow");
+  if (!flow) return;
+  flow.addEventListener("click", event => {
+    const id = event.target.closest("[data-id]")?.dataset.id || null;
+    flowView.selected = id === flowView.selected ? null : id;
+    applyFlowFocus();
+  });
+  flow.addEventListener("keydown", event => {
+    if (event.key !== "Escape" || !flowView.selected) return;
+    flowView.selected = null;
+    applyFlowFocus();
+  });
+  animateFlow(flowData());
+  let width = flow.clientWidth;
+  flowView.observer = new ResizeObserver(() => {
+    if (flow.clientWidth === width) return;
+    width = flow.clientWidth;
+    drawFlow(flowView.shown);
+  });
+  flowView.observer.observe(flow);
 }
 
 function dealsPage() {
@@ -161,7 +383,7 @@ function assistantPage() {
 
 const pages = {
   overview: { label: "Overview", render: overviewPage },
-  budget: { label: "Budget", render: budgetPage },
+  budget: { label: "Budget", render: budgetPage, mount: mountBudget },
   deals: { label: "Deals & rewards", render: dealsPage },
   trips: { label: "Trips & goals", render: tripsPage },
   home: { label: "Shared home", render: homePage },
@@ -171,7 +393,9 @@ const pages = {
 
 function render() {
   const page = pages[state.page] || pages.overview;
+  flowView.observer?.disconnect();
   content.innerHTML = page.render();
+  page.mount?.();
   document.querySelector("#page-crumb").textContent = page.label;
   document.querySelectorAll(".nav-link").forEach(button => button.classList.toggle("active", button.dataset.page === state.page));
   document.querySelector("#sidebar").classList.remove("open");
@@ -241,6 +465,10 @@ function iouModal() {
 function handleAction(action, element) {
   if (action === "expense") return expenseModal();
   if (action === "iou") return iouModal();
+  if (action === "budget-view") {
+    state.budgetView = element.dataset.view;
+    return render();
+  }
   if (action === "save-deal") {
     const index = Number(element.dataset.index);
     state.savedDeals.has(index) ? state.savedDeals.delete(index) : state.savedDeals.add(index);
@@ -273,6 +501,14 @@ document.addEventListener("click", event => {
   }
   const actionButton = event.target.closest("[data-action]");
   if (actionButton) handleAction(actionButton.dataset.action, actionButton);
+});
+
+content.addEventListener("input", event => {
+  const input = event.target.closest("[data-flow-key]");
+  if (!input) return;
+  const value = Number(input.value);
+  setFlowValue(input.dataset.flowKey, Number.isFinite(value) && value > 0 ? value : 0);
+  animateFlow(flowData());
 });
 
 document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#sidebar").classList.toggle("open"));
