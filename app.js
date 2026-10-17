@@ -1,12 +1,26 @@
+const spendingData = {
+  January: { total: 1238, change: "-3.1%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  February: { total: 1312, change: "-1.4%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  March: { total: 1380, change: "4.2%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  April: { total: 1455, change: "6.5%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  May: { total: 1520, change: "3.8%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  June: { total: 1592, change: "5.1%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  July: { total: 1661, change: "2.9%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  August: { total: 1717, change: "4.4%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  September: { total: 1789, change: "1.7%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 },
+  October: { total: 1846.5, change: "1.2%", labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October"], bars: [44, 52, 48, 60, 64, 71, 68, 80, 74, 88], highlight: 9 }
+};
+
 const state = {
   page: "overview",
+  spendingMonth: "October",
   budget: {
     total: 2800,
     spent: 1846.5,
     categories: [
       { name: "Groceries", icon: "✳", className: "grocery", spent: 426.8, limit: 600 },
       { name: "Home & bills", icon: "⌂", className: "home", spent: 714.2, limit: 950 },
-      { name: "Travel", icon: "↗", className: "travel", spent: 285.5, limit: 500 },
+      { name: "Travel", icon: "↗️", className: "travel", spent: 285.5, limit: 500 },
       { name: "Little joys", icon: "♡", className: "fun", spent: 420, limit: 750 }
     ]
   },
@@ -14,19 +28,19 @@ const state = {
   transactions: [
     { name: "Weekly shop · Green Basket", category: "Groceries", amount: 64.2, date: "Today" },
     { name: "Electricity · Bright Energy", category: "Home & bills", amount: 82.4, date: "Yesterday" },
-    { name: "Train to Brighton", category: "Travel", amount: 31.5, date: "Oct 14" }
+    { name: "Train to Brighton", category: "Travel", amount: 31.5, date: "October 14" }
   ],
   ious: [
-    { name: "Maya Chen", detail: "Dinner · Oct 12", amount: 28.5, direction: "in" },
-    { name: "You owe Alex", detail: "Cab home · Oct 10", amount: 16, direction: "out" }
+    { name: "Maya Chen", detail: "Dinner · October 12", amount: 28.5, direction: "in" },
+    { name: "You owe Alex", detail: "Cab home · October 10", amount: 16, direction: "out" }
   ]
 };
 
 const deals = [
-  { brand: "FreshMart", logo: "F", logoClass: "", title: "£5 off your next shop", detail: "Spend £40 or more · Ends Oct 31", value: "£5 back", type: "Groceries" },
+  { brand: "FreshMart", logo: "F", logoClass: "", title: "£5 off your next shop", detail: "Spend £40 or more · Ends October 31", value: "£5 back", type: "Groceries" },
   { brand: "Market Lane", logo: "M", logoClass: "rose", title: "Double loyalty points", detail: "On fruit & veg this week", value: "2× points", type: "Groceries" },
   { brand: "RailHop", logo: "R", logoClass: "blue", title: "Save 20% on advance fares", detail: "Selected off-peak journeys", value: "20% off", type: "Train" },
-  { brand: "FlyLite", logo: "✈", logoClass: "yellow", title: "£18 off your next flight", detail: "For trips booked this month", value: "£18 off", type: "Flights" }
+  { brand: "FlyLite", logo: "✈️", logoClass: "yellow", title: "£18 off your next flight", detail: "For trips booked this month", value: "£18 off", type: "Flights" }
 ];
 
 const money = value => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(value);
@@ -57,36 +71,39 @@ function dealsMarkup() {
 }
 
 function overviewPage() {
-  const percentage = Math.round(state.budget.spent / state.budget.total * 100);
-  return `${header("SATURDAY, OCTOBER 17", "A little more room to breathe.", "Here’s your money, all in one place.", "Add expense", "expense")}
+  const selectedMonth = spendingData[state.spendingMonth] || spendingData.October;
+  const percentage = Math.round(selectedMonth.total / state.budget.total * 100);
+  const monthOptions = Object.keys(spendingData).map(month => `<option value="${month}" ${month === state.spendingMonth ? "selected" : ""}>${month}</option>`).join("");
+
+  return `${header("SATURDAY, OCTOBER 17", "Every bill, one account.", "Here’s your money, all in one place.", "Add expense", "expense")}
     <div class="dashboard-grid">
       <article class="card balance-card">
-        <div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><select class="period-select" aria-label="Budget period"><option>This month⌄</option></select></div>
-        <div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} monthly budget</p>
-        <div class="balance-progress"><div class="progress-meta"><span>Looking good so far</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${percentage}%"></div></div><div class="balance-foot"><span>${money(state.budget.total - state.budget.spent)} left to spend</span><strong>↗ On track</strong></div></div>
+        <div class="balance-top"><span class="eyebrow">${state.spendingMonth.toUpperCase()} SPENDING</span><select class="period-select" aria-label="Budget period" data-month-select>${monthOptions}</select></div>
+        <div class="balance-amount">${money(selectedMonth.total)}</div><p class="balance-caption">of ${money(state.budget.total)} monthly budget</p>
+        <div class="balance-progress"><div class="progress-meta"><span>Looking good so far</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${percentage}%"></div></div><div class="balance-foot"><span>${money(state.budget.total - selectedMonth.total)} left to spend</span><strong>↗️ On track</strong></div></div>
       </article>
       <article class="card stat-card">
-        <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last 6 months</p></div><span class="month-change">↓ 8.4%</span></div>
-        <div class="chart-total">${money(1846.5)}<span>this month</span></div>
-        <div class="chart" aria-label="Spending chart for the last six months">${[62, 78, 57, 90, 70, 54].map((height, index) => `<div class="chart-column"><div class="chart-bar ${index === 5 ? "highlight" : ""}" style="height:${height}%"></div></div>`).join("")}</div>
-        <div class="chart-labels"><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div>
+        <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last 10 months</p></div><div class="card-controls"><select class="month-select" aria-label="Select month" data-month-select>${monthOptions}</select></div></div>
+        <div class="chart-total">${money(selectedMonth.total)}</div>
+        <div class="chart" aria-label="Spending chart for the last ten months">${selectedMonth.bars.map((height, index) => `<div class="chart-column"><div class="chart-bar ${index === selectedMonth.highlight ? "highlight" : ""}" style="height:${height}%"></div></div>`).join("")}</div>
+        <div class="chart-labels">${selectedMonth.labels.map(label => `<span>${label}</span>`).join("")}</div>
       </article>
       <section>
-        <div class="section-heading"><h2>Your budget, at a glance</h2><button class="text-link" data-page="budget">All categories ↗</button></div>
+        <div class="section-heading"><h2>Your budget, at a glance</h2><button class="text-link" data-page="budget">All categories ↗️</button></div>
         <article class="card category-card">${categoriesMarkup(true)}</article>
       </section>
       <section>
-        <div class="section-heading"><h2>Good things you could save on</h2><button class="text-link" data-page="deals">See all deals ↗</button></div>
+        <div class="section-heading"><h2>Good things you could save on</h2><button class="text-link" data-page="deals">See all deals ↗️</button></div>
         <article class="card deal-card">
           <div class="deal-list">${deals.slice(0, 3).map(deal => `<div class="deal-item"><span class="deal-logo ${deal.logoClass}">${deal.logo}</span><span class="deal-copy"><strong>${deal.title}</strong><small>${deal.brand} · ${deal.detail.split(" · ")[0]}</small></span><span class="deal-value">${deal.value}</span></div>`).join("")}</div>
         </article>
       </section>
       <section>
-        <div class="section-heading"><h2>Something to look forward to</h2><button class="text-link" data-page="trips">Your goals ↗</button></div>
+        <div class="section-heading"><h2>Something to look forward to</h2><button class="text-link" data-page="trips">Your goals ↗️</button></div>
         <article class="card trip-card"><span class="trip-date"><strong>22</strong><small>NOV</small></span><span class="trip-copy"><strong>Cosy cabin weekend</strong><small>Saved ${money(420)} of ${money(900)}</small></span><span class="trip-progress"><span style="width:47%;display:block"></span></span></article>
       </section>
       <section>
-        <div class="section-heading"><h2>Shared home</h2><button class="text-link" data-page="home">Open home ↗</button></div>
+        <div class="section-heading"><h2>Shared home</h2><button class="text-link" data-page="home">Open home ↗️</button></div>
         <article class="card home-card"><div class="home-main"><div class="home-members"><span class="avatar">JD</span><span class="avatar avatar-lilac">MC</span><span class="avatar avatar-blue">AR</span></div><span class="home-copy"><strong>Willow House</strong><small>3 people · Bills are looking good</small></span><span class="bill-total">${money(218)}<small>due this week</small></span></div></article>
       </section>
     </div>`;
@@ -95,11 +112,11 @@ function overviewPage() {
 function budgetPage() {
   return `${header("YOUR MONEY, YOUR PACE", "Monthly budget", "A simple plan for where your money goes.", "Add expense", "expense")}
     <div class="view-grid"><div>
-      <article class="card balance-card"><div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><span class="eyebrow">MONTHLY PLAN</span></div><div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} planned · ${money(state.budget.total - state.budget.spent)} left</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, state.budget.spent / state.budget.total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(state.budget.spent / state.budget.total * 100)}% of your monthly plan</span><strong>↗ On track</strong></div></div></article>
+      <article class="card balance-card"><div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><span class="eyebrow">MONTHLY PLAN</span></div><div class="balance-amount">${money(state.budget.spent)}</div><p class="balance-caption">of ${money(state.budget.total)} planned · ${money(state.budget.total - state.budget.spent)} left</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, state.budget.spent / state.budget.total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(state.budget.spent / state.budget.total * 100)}% of your monthly plan</span><strong>↗️ On track</strong></div></div></article>
       <div class="section-heading"><h2>Categories</h2><button class="text-link" data-action="edit-budget">Edit monthly plan</button></div>
       <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line"><strong>${item.icon} &nbsp;${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
     </div><div>
-      <article class="card panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>Your latest added expenses.</p></div></div>${state.transactions.map(tx => `<div class="iou-row"><span class="deal-logo">${tx.category === "Groceries" ? "✳" : tx.category === "Travel" ? "↗" : "⌂"}</span><span class="iou-copy"><strong>${escapeHTML(tx.name)}</strong><small>${escapeHTML(tx.category)} · ${escapeHTML(tx.date)}</small></span><span class="iou-amount">−${money(tx.amount)}</span></div>`).join("")}</article>
+      <article class="card panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>Your latest added expenses.</p></div></div>${state.transactions.map(tx => `<div class="iou-row"><span class="deal-logo">${tx.category === "Groceries" ? "✳" : tx.category === "Travel" ? "↗️" : "⌂"}</span><span class="iou-copy"><strong>${escapeHTML(tx.name)}</strong><small>${escapeHTML(tx.category)} · ${escapeHTML(tx.date)}</small></span><span class="iou-amount">−${money(tx.amount)}</span></div>`).join("")}</article>
       <article class="card panel"><div class="panel-heading"><div><h2>A gentler nudge</h2><p>You're spending less than last month.</p></div><span class="deal-logo">✳</span></div><p>Your groceries are at ${money(state.budget.categories[0].spent)} this month, with plenty of room left in the plan. Nice one.</p></article>
     </div></div>`;
 }
@@ -114,10 +131,10 @@ function dealsPage() {
 
 function tripsPage() {
   return `${header("SAVE FOR THE GOOD STUFF", "Trips & little goals", "Plan a holiday together or set aside a bit each month.", "New savings goal", "goal")}
-    <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Holiday savings</h2><button class="text-link" data-action="invite">Invite someone ↗</button></div>
-      <article class="card goal-card"><div class="goal-top"><div class="goal-title"><span class="deal-logo">✈</span><span><strong>Cosy cabin weekend</strong><small>Shared with Maya & Alex · Nov 22–24</small></span></div><span class="offer-tag">On track</span></div><div class="goal-amount">${money(420)} <small>of ${money(900)}</small></div><div class="goal-progress"><span style="width:47%"></span></div><div class="goal-foot"><span>47% saved</span><span>${money(480)} to go</span></div><div class="section-heading"><span class="card-title">Group contributions</span><button class="text-link" data-action="contribute">Add money</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>Your contribution</small></span><strong>${money(180)}</strong></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Added Oct 13</small></span><strong>${money(140)}</strong></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Added Oct 15</small></span><strong>${money(100)}</strong></div></div></article>
+    <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Holiday savings</h2><button class="text-link" data-action="invite">Invite someone ↗️</button></div>
+      <article class="card goal-card"><div class="goal-top"><div class="goal-title"><span class="deal-logo">✈️</span><span><strong>Cosy cabin weekend</strong><small>Shared with Maya & Alex · November 22–24</small></span></div><span class="offer-tag">On track</span></div><div class="goal-amount">${money(420)} <small>of ${money(900)}</small></div><div class="goal-progress"><span style="width:47%"></span></div><div class="goal-foot"><span>47% saved</span><span>${money(480)} to go</span></div><div class="section-heading"><span class="card-title">Group contributions</span><button class="text-link" data-action="contribute">Add money</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>Your contribution</small></span><strong>${money(180)}</strong></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Added October 13</small></span><strong>${money(140)}</strong></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Added October 15</small></span><strong>${money(100)}</strong></div></div></article>
       <article class="card panel"><div class="panel-heading"><div><h2>On your wish list</h2><p>Keep ideas here while you plan.</p></div><button class="button button-small" data-action="destination">＋ Add an idea</button></div><div class="empty-note">That spontaneous long weekend? Start a goal and make it happen, one small saving at a time.</div></article>
-    </div><div><article class="card panel"><div class="panel-heading"><div><h2>Fare finder</h2><p>Sample deals for getting away.</p></div><span class="deal-logo blue">↗</span></div>${deals.filter(d => d.type !== "Groceries").map(d => `<div class="deal-item" style="margin:14px 0"><span class="deal-logo ${d.logoClass}">${d.logo}</span><span class="deal-copy"><strong>${d.title}</strong><small>${d.brand} · ${d.detail}</small></span></div>`).join("")}</article><p class="fine-print">Savings goals are planning tools only. No payments or bookings are made in this demo.</p></div></div>`;
+    </div><div><article class="card panel"><div class="panel-heading"><div><h2>Fare finder</h2><p>Sample deals for getting away.</p></div><span class="deal-logo blue">↗️</span></div>${deals.filter(d => d.type !== "Groceries").map(d => `<div class="deal-item" style="margin:14px 0"><span class="deal-logo ${d.logoClass}">${d.logo}</span><span class="deal-copy"><strong>${d.title}</strong><small>${d.brand} · ${d.detail}</small></span></div>`).join("")}</article><p class="fine-print">Savings goals are planning tools only. No payments or bookings are made in this demo.</p></div></div>`;
 }
 
 function homePage() {
@@ -125,10 +142,10 @@ function homePage() {
     <div class="view-grid"><div>
       <article class="card panel"><div class="panel-heading"><div><h2>October shared bills</h2><p>Everyone can see what's due and what's covered.</p></div><span class="offer-tag">3 flatmates</span></div>
       <div class="home-main" style="margin-bottom:15px"><div class="home-members"><span class="avatar">JD</span><span class="avatar avatar-lilac">MC</span><span class="avatar avatar-blue">AR</span></div><span class="home-copy"><strong>Shared total this month</strong><small>Your share: ${money(72.67)}</small></span><span class="bill-total">${money(218)}<small>all bills</small></span></div>
-      ${[["Electricity", "Bright Energy · Due Oct 21", 86, "Due soon"], ["Wi-Fi", "ConnectNow · Paid Oct 4", 42, "Paid"], ["Water", "City Water · Paid Oct 8", 90, "Paid"]].map(b => `<div class="bill-row"><strong>${b[0]}</strong><span class="bill-status">${b[3]}</span><small>${b[1]}</small><strong>${money(b[2])}</strong></div>`).join("")}
+      ${[["Electricity", "Bright Energy · Due October 21", 86, "Due soon"], ["Wi-Fi", "ConnectNow · Paid October 4", 42, "Paid"], ["Water", "City Water · Paid October 8", 90, "Paid"]].map(b => `<div class="bill-row"><strong>${b[0]}</strong><span class="bill-status">${b[3]}</span><small>${b[1]}</small><strong>${money(b[2])}</strong></div>`).join("")}
       <div class="section-heading"><span class="card-title">This month’s split</span><button class="text-link" data-action="add-bill">＋ Add a bill</button></div>
       ${[["Jamie Davis", 72.67, ""], ["Maya Chen", 72.67, "avatar-lilac"], ["Alex Rivera", 72.66, "avatar-blue"]].map(m => `<div class="member-row" style="padding:7px 0"><span class="avatar ${m[2]}">${m[0].split(" ").map(s=>s[0]).join("")}</span><span class="member-name">${m[0]}<small>Equal share</small></span><strong>${money(m[1])}</strong></div>`).join("")}</article>
-    </div><div><article class="card panel"><div class="panel-heading"><div><h2>Housemates</h2><p>Everyone in the same place.</p></div><button class="button button-small" data-action="invite">＋ Invite</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>You · Admin</small></span></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Joined Sep 2</small></span></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Joined Sep 4</small></span></div></div></article>
+    </div><div>    <article class="card panel"><div class="panel-heading"><div><h2>Housemates</h2><p>Everyone in the same place.</p></div><button class="button button-small" data-action="invite">＋ Invite</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>You · Admin</small></span></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Joined September 2</small></span></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Joined September 4</small></span></div></div></article>
       <article class="card panel"><div class="panel-heading"><div><h2>Room to improve</h2><p>Shared bills can be easier to manage.</p></div><span class="deal-logo">✳</span></div><p>Add bills as they arrive and keep your flatmates in the loop. This demo doesn't connect to providers or move money.</p></article>
     </div></div>`;
 }
@@ -143,7 +160,7 @@ function owedPage() {
       <div class="section-heading"><h2>Recent IOUs</h2></div>
       ${state.ious.map(item => `<div class="iou-row"><span class="avatar ${item.direction === "in" ? "avatar-lilac" : "avatar-peach"}">${item.name.split(" ").map(s => s[0]).join("")}</span><span class="iou-copy"><strong>${escapeHTML(item.name)}</strong><small>${escapeHTML(item.detail)}</small></span><span class="iou-amount ${item.direction === "in" ? "positive" : "negative"}">${item.direction === "in" ? "+" : "−"}${money(item.amount)}<small>${item.direction === "in" ? "owes you" : "you owe"}</small></span></div>`).join("")}
       </article></div><div>
-      <article class="card panel"><div class="panel-heading"><div><h2>Keep it friendly</h2><p>Money between people can stay simple.</p></div><span class="deal-logo">↔</span></div><p>These notes are just reminders for you. No payment requests are sent, and there are no bank connections in this prototype.</p><button class="button button-small" data-action="iou">＋ Add a note</button></article>
+      <article class="card panel"><div class="panel-heading"><div><h2>Keep it friendly</h2><p>Money between people can stay simple.</p></div><span class="deal-logo">↔️</span></div><p>These notes are just reminders for you. No payment requests are sent, and there are no bank connections in this prototype.</p><button class="button button-small" data-action="iou">＋ Add a note</button></article>
     </div></div>`;
 }
 
@@ -273,6 +290,13 @@ document.addEventListener("click", event => {
   }
   const actionButton = event.target.closest("[data-action]");
   if (actionButton) handleAction(actionButton.dataset.action, actionButton);
+});
+
+document.addEventListener("change", event => {
+  const monthSelect = event.target.closest("[data-month-select]");
+  if (!monthSelect) return;
+  state.spendingMonth = monthSelect.value;
+  render();
 });
 
 document.querySelector("#mobile-menu").addEventListener("click", () => document.querySelector("#sidebar").classList.toggle("open"));
