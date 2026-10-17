@@ -6,11 +6,15 @@ const state = {
     total: 2800,
     spent: 1846.5,
     history: [
-      { key: "2026-05", label: "May", spent: 2140.3 },
-      { key: "2026-06", label: "June", spent: 2465.9 },
-      { key: "2026-07", label: "July", spent: 1988.4 },
-      { key: "2026-08", label: "August", spent: 2912.75 },
-      { key: "2026-09", label: "September", spent: 2015.6 }
+      { key: "2026-01", label: "January", spent: 1238 },
+      { key: "2026-02", label: "February", spent: 1312 },
+      { key: "2026-03", label: "March", spent: 1380 },
+      { key: "2026-04", label: "April", spent: 1455 },
+      { key: "2026-05", label: "May", spent: 1520 },
+      { key: "2026-06", label: "June", spent: 1592 },
+      { key: "2026-07", label: "July", spent: 1661 },
+      { key: "2026-08", label: "August", spent: 1717 },
+      { key: "2026-09", label: "September", spent: 1789 }
     ],
     categories: [
       { name: "Groceries", icon: "✳", className: "grocery", spent: 426.8, limit: 600 },
@@ -30,16 +34,16 @@ const state = {
   transactions: [
     { name: "Weekly shop · Green Basket", category: "Groceries", amount: 64.2, date: "Today" },
     { name: "Electricity · Bright Energy", category: "Home & bills", amount: 82.4, date: "Yesterday" },
-    { name: "Train to Brighton", category: "Travel", amount: 31.5, date: "Oct 14" }
+    { name: "Train to Brighton", category: "Travel", amount: 31.5, date: "October 14" }
   ],
   ious: [
-    { name: "Maya Chen", detail: "Dinner · Oct 12", amount: 28.5, direction: "in" },
-    { name: "You owe Alex", detail: "Cab home · Oct 10", amount: 16, direction: "out" }
+    { name: "Maya Chen", detail: "Dinner · October 12", amount: 28.5, direction: "in" },
+    { name: "You owe Alex", detail: "Cab home · October 10", amount: 16, direction: "out" }
   ]
 };
 
 const deals = [
-  { brand: "FreshMart", logo: "F", logoClass: "", title: "£5 off your next shop", detail: "Spend £40 or more · Ends Oct 31", value: "£5 back", type: "Groceries" },
+  { brand: "FreshMart", logo: "F", logoClass: "", title: "£5 off your next shop", detail: "Spend £40 or more · Ends October 31", value: "£5 back", type: "Groceries" },
   { brand: "Market Lane", logo: "M", logoClass: "rose", title: "Double loyalty points", detail: "On fruit & veg this week", value: "2× points", type: "Groceries" },
   { brand: "RailHop", logo: "R", logoClass: "blue", title: "Save 20% on advance fares", detail: "Selected off-peak journeys", value: "20% off", type: "Train" },
   { brand: "FlyLite", logo: "✈", logoClass: "yellow", title: "£18 off your next flight", detail: "For trips booked this month", value: "£18 off", type: "Flights" }
@@ -89,7 +93,7 @@ function overviewPage() {
   const progressNote = month.current ? (left < 0 ? "Over your plan" : "Looking good so far") : "Month closed";
   const leftNote = left < 0 ? `${money(-left)} over budget` : `${money(left)} ${month.current ? "left to spend" : "under budget"}`;
   const status = left < 0 ? "↘ Over budget" : month.current ? "↗ On track" : "✓ Under budget";
-  return `${header("SATURDAY, OCTOBER 17", "A little more room to breathe.", "Here’s your money, all in one place.", "Add expense", "expense")}
+  return `${header("SATURDAY, OCTOBER 17", "Every bill, one account.", "Here’s your money, all in one place.", "Add expense", "expense")}
     <div class="dashboard-grid">
       <article class="card balance-card">
         <div class="balance-top"><span class="eyebrow">${month.label.toUpperCase()} SPENDING</span><select class="period-select" id="overview-month" aria-label="Budget month">${[...months].reverse().map(item => `<option value="${item.key}"${item.key === month.key ? " selected" : ""}>${item.current ? "This month" : item.label}</option>`).join("")}</select></div>
@@ -97,10 +101,10 @@ function overviewPage() {
         <div class="balance-progress"><div class="progress-meta"><span>${progressNote}</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, percentage)}%"></div></div><div class="balance-foot"><span>${leftNote}</span><strong>${status}</strong></div></div>
       </article>
       <article class="card stat-card">
-        <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last 6 months</p></div>${change === null ? "" : `<span class="month-change${change > 0 ? " up" : ""}" title="Compared with ${previous.label}">${change > 0 ? "↑" : "↓"} ${Math.abs(change).toFixed(1)}%</span>`}</div>
+        <div class="card-title-row"><div><div class="card-title">Spending over time</div><p class="card-subtitle">Your last ${months.length} months</p></div>${change === null ? "" : `<span class="month-change${change > 0 ? " up" : ""}" title="Compared with ${previous.label}">${change > 0 ? "↑" : "↓"} ${Math.abs(change).toFixed(1)}%</span>`}</div>
         <div class="chart-total">${money(month.spent)}<span>${month.current ? "this month" : `in ${month.label}`}</span></div>
-        <div class="chart" aria-label="Spending chart for the last six months">${months.map(item => `<div class="chart-column"><div class="chart-bar ${item.key === month.key ? "highlight" : ""}" style="height:${Math.round(item.spent / peak * 90)}%"></div></div>`).join("")}</div>
-        <div class="chart-labels">${months.map(item => `<span>${item.label.slice(0, 3)}</span>`).join("")}</div>
+        <div class="chart" aria-label="Spending chart for the last ${months.length} months">${months.map(item => `<div class="chart-column"><div class="chart-bar ${item.key === month.key ? "highlight" : ""}" style="height:${Math.round(item.spent / peak * 90)}%"></div></div>`).join("")}</div>
+        <div class="chart-labels">${months.map(item => `<span title="${item.label}">${item.label.slice(0, 3)}</span>`).join("")}</div>
       </article>
       <section>
         <div class="section-heading"><h2>Your budget, at a glance</h2><button class="text-link" data-page="budget">All categories ↗</button></div>
@@ -419,7 +423,7 @@ function dealsPage() {
 function tripsPage() {
   return `${header("SAVE FOR THE GOOD STUFF", "Trips & little goals", "Plan a holiday together or set aside a bit each month.", "New savings goal", "goal")}
     <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Holiday savings</h2><button class="text-link" data-action="invite">Invite someone ↗</button></div>
-      <article class="card goal-card"><div class="goal-top"><div class="goal-title"><span class="deal-logo">✈</span><span><strong>Cosy cabin weekend</strong><small>Shared with Maya & Alex · Nov 22–24</small></span></div><span class="offer-tag">On track</span></div><div class="goal-amount">${money(420)} <small>of ${money(900)}</small></div><div class="goal-progress"><span style="width:47%"></span></div><div class="goal-foot"><span>47% saved</span><span>${money(480)} to go</span></div><div class="section-heading"><span class="card-title">Group contributions</span><button class="text-link" data-action="contribute">Add money</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>Your contribution</small></span><strong>${money(180)}</strong></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Added Oct 13</small></span><strong>${money(140)}</strong></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Added Oct 15</small></span><strong>${money(100)}</strong></div></div></article>
+      <article class="card goal-card"><div class="goal-top"><div class="goal-title"><span class="deal-logo">✈</span><span><strong>Cosy cabin weekend</strong><small>Shared with Maya & Alex · November 22–24</small></span></div><span class="offer-tag">On track</span></div><div class="goal-amount">${money(420)} <small>of ${money(900)}</small></div><div class="goal-progress"><span style="width:47%"></span></div><div class="goal-foot"><span>47% saved</span><span>${money(480)} to go</span></div><div class="section-heading"><span class="card-title">Group contributions</span><button class="text-link" data-action="contribute">Add money</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>Your contribution</small></span><strong>${money(180)}</strong></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Added October 13</small></span><strong>${money(140)}</strong></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Added October 15</small></span><strong>${money(100)}</strong></div></div></article>
       <article class="card panel"><div class="panel-heading"><div><h2>On your wish list</h2><p>Keep ideas here while you plan.</p></div><button class="button button-small" data-action="destination">＋ Add an idea</button></div><div class="empty-note">That spontaneous long weekend? Start a goal and make it happen, one small saving at a time.</div></article>
     </div><div><article class="card panel"><div class="panel-heading"><div><h2>Fare finder</h2><p>Sample deals for getting away.</p></div><span class="deal-logo blue">↗</span></div>${deals.filter(d => d.type !== "Groceries").map(d => `<div class="deal-item" style="margin:14px 0"><span class="deal-logo ${d.logoClass}">${d.logo}</span><span class="deal-copy"><strong>${d.title}</strong><small>${d.brand} · ${d.detail}</small></span></div>`).join("")}</article><p class="fine-print">Savings goals are planning tools only. No payments or bookings are made in this demo.</p></div></div>`;
 }
@@ -429,10 +433,10 @@ function homePage() {
     <div class="view-grid"><div>
       <article class="card panel"><div class="panel-heading"><div><h2>October shared bills</h2><p>Everyone can see what's due and what's covered.</p></div><span class="offer-tag">3 flatmates</span></div>
       <div class="home-main" style="margin-bottom:15px"><div class="home-members"><span class="avatar">JD</span><span class="avatar avatar-lilac">MC</span><span class="avatar avatar-blue">AR</span></div><span class="home-copy"><strong>Shared total this month</strong><small>Your share: ${money(72.67)}</small></span><span class="bill-total">${money(218)}<small>all bills</small></span></div>
-      ${[["Electricity", "Bright Energy · Due Oct 21", 86, "Due soon"], ["Wi-Fi", "ConnectNow · Paid Oct 4", 42, "Paid"], ["Water", "City Water · Paid Oct 8", 90, "Paid"]].map(b => `<div class="bill-row"><strong>${b[0]}</strong><span class="bill-status">${b[3]}</span><small>${b[1]}</small><strong>${money(b[2])}</strong></div>`).join("")}
+      ${[["Electricity", "Bright Energy · Due October 21", 86, "Due soon"], ["Wi-Fi", "ConnectNow · Paid October 4", 42, "Paid"], ["Water", "City Water · Paid October 8", 90, "Paid"]].map(b => `<div class="bill-row"><strong>${b[0]}</strong><span class="bill-status">${b[3]}</span><small>${b[1]}</small><strong>${money(b[2])}</strong></div>`).join("")}
       <div class="section-heading"><span class="card-title">This month’s split</span><button class="text-link" data-action="add-bill">＋ Add a bill</button></div>
       ${[["Jamie Davis", 72.67, ""], ["Maya Chen", 72.67, "avatar-lilac"], ["Alex Rivera", 72.66, "avatar-blue"]].map(m => `<div class="member-row" style="padding:7px 0"><span class="avatar ${m[2]}">${m[0].split(" ").map(s=>s[0]).join("")}</span><span class="member-name">${m[0]}<small>Equal share</small></span><strong>${money(m[1])}</strong></div>`).join("")}</article>
-    </div><div><article class="card panel"><div class="panel-heading"><div><h2>Housemates</h2><p>Everyone in the same place.</p></div><button class="button button-small" data-action="invite">＋ Invite</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>You · Admin</small></span></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Joined Sep 2</small></span></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Joined Sep 4</small></span></div></div></article>
+    </div><div>    <article class="card panel"><div class="panel-heading"><div><h2>Housemates</h2><p>Everyone in the same place.</p></div><button class="button button-small" data-action="invite">＋ Invite</button></div><div class="member-list"><div class="member-row"><span class="avatar">JD</span><span class="member-name">Jamie Davis<small>You · Admin</small></span></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Maya Chen<small>Joined September 2</small></span></div><div class="member-row"><span class="avatar avatar-blue">AR</span><span class="member-name">Alex Rivera<small>Joined September 4</small></span></div></div></article>
       <article class="card panel"><div class="panel-heading"><div><h2>Room to improve</h2><p>Shared bills can be easier to manage.</p></div><span class="deal-logo">✳</span></div><p>Add bills as they arrive and keep your flatmates in the loop. This demo doesn't connect to providers or move money.</p></article>
     </div></div>`;
 }
