@@ -279,7 +279,7 @@ function drawFlow(d) {
   left.forEach(n => { nodes += block(n, xL, "l"); });
   right.forEach(n => { nodes += block(n, xR, "r"); });
   nodes += `<rect x="${xC}" y="${cy}" width="${centerW}" height="${C * k}" style="fill:var(--c-income)"/>`;
-  if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--red)"/>`;
+  if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--c-over)"/>`;
 
   const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 2}px` : `left:${xR + nodeW + 2}px`};max-width:${labelW - 2}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.warn ? " warn" : ""}">${n.sub}</span>` : ""}</button>`;
   left.forEach(n => { labels += label(n, "l"); });
