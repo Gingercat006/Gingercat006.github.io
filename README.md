@@ -1,6 +1,6 @@
-# Pennypath
+# PennyWise
 
-Pennypath is a responsive, dependency-free prototype for everyday budgeting and shared money planning. It brings budget tracking, sample grocery cashback and travel offers, holiday savings, household bills, IOU notes, and demo-only money assistant concepts into one place.
+PennyWise is a responsive, dependency-free prototype for everyday budgeting and shared money planning. It brings budget tracking, sample grocery cashback and travel offers, holiday savings, household bills, IOU notes, and demo-only money assistant concepts into one place.
 
 ## Start the website (no compiling needed)
 
