@@ -259,7 +259,7 @@ const ribbon = (x0, a0, b0, x1, a1, b1) => {
 // Every stream in the money flow by id: its name, its colour, and whether it adds money ("in") or takes it away ("out").
 function branchInfo(id) {
   const category = state.budget.categories.find(item => item.className === id);
-  if (category) return { name: category.name, color: spendColor(id, category.spent, category.limit), kind: "out" };
+  if (category) return { name: category.name, color: `var(--flow-${id})`, kind: "out" };
   const income = state.budget.income.find(item => item.id === id);
   if (income) return { name: income.name, color: "var(--c-income)", kind: "in" };
   return {
@@ -299,7 +299,7 @@ function setFlowValue(key, value) {
 
 function flowMarkup() {
   const swatch = color => `<i class="flow-swatch" style="background:${color}"></i>`;
-  const row = (key, label, value, color) => `<div class="flow-row"><i class="flow-swatch" data-swatch="${key}" style="background:${color}"></i><label for="flow-${key}">${escapeHTML(label)}</label><span class="flow-money"><span>£</span><input id="flow-${key}" data-flow-key="${key}" type="number" inputmode="decimal" min="0" step="any" value="${+value.toFixed(2)}"></span></div>`;
+  const row = (key, label, value, color) => `<div class="flow-row">${swatch(color)}<label for="flow-${key}">${escapeHTML(label)}</label><span class="flow-money"><span>£</span><input id="flow-${key}" data-flow-key="${key}" type="number" inputmode="decimal" min="0" step="any" value="${+value.toFixed(2)}"></span></div>`;
   const groups = [
     ["Income", state.budget.income.map(item => row(item.id, item.name, item.amount, "var(--c-income)"))],
     ["Expenditure", state.budget.categories.map(item => row(item.className, item.name, item.spent, branchInfo(item.className).color))],
@@ -314,7 +314,7 @@ function flowMarkup() {
       </div>
       <div class="flow-cols" aria-hidden="true"><span>Income</span><span>October</span><span>Expenditure</span></div>
       <div class="flow" id="flow"></div>
-      <div class="flow-legend"><span>${swatch("var(--c-income)")}Income</span><span>${swatch("var(--c-balance)")}Opening and remaining balance</span><span>${swatch("var(--c-grocery)")}Spending</span><span>${swatch("var(--c-near)")}Near budget limit</span><span>${swatch("var(--c-jar)")}Savings jar</span><span>${swatch("repeating-linear-gradient(135deg,var(--ghost-bg) 0 2px,var(--ghost) 2px 4px)")}Savings jar, pending until income covers it</span></div>
+      <div class="flow-legend"><span>${swatch("var(--c-income)")}Income</span><span>${swatch("var(--c-balance)")}Opening and remaining balance</span><span>${swatch("var(--c-jar)")}Savings jar, target met</span><span>${swatch("repeating-linear-gradient(135deg,var(--ghost-bg) 0 2px,var(--ghost) 2px 4px)")}Savings jar, pending until income covers it</span></div>
     </article>
     <article class="card panel flow-history" aria-live="polite">
       <div class="panel-heading"><div><h2>Transaction history</h2><p id="history-note"></p></div><button class="button button-small" data-action="flow-clear" id="history-clear" hidden>Clear selection</button></div>
@@ -346,11 +346,10 @@ function drawFlow(d) {
 
   const right = state.budget.categories.filter(item => d[item.className] > .5).sort((a, b) => d[b.className] - d[a.className]).map(item => {
     const v = d[item.className];
-    const tone = v > item.limit ? "warn" : v >= item.limit * .9 ? "near" : "";
-    return { id: item.className, v, label: item.name, color: spendColor(item.className, v, item.limit), sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of budget` : "", tone };
+    return { id: item.className, v, label: item.name, color: `var(--flow-${item.className})`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of budget` : "", warn: v > item.limit };
   });
   if (remaining > .5) right.push({ id: "remain", v: remaining, label: "Remaining balance", color: "var(--c-balance)" });
-  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, color: met ? "var(--c-jar)" : "url(#flow-hatch)", sub: met ? "Target met" : `${pounds(goal - Math.max(0, net))} short`, tone: met ? "good" : "" });
+  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, color: met ? "var(--c-jar)" : "url(#flow-hatch)", sub: met ? "Target met" : `${pounds(goal - Math.max(0, net))} short` });
 
   const place = list => {
     list.forEach(n => { n.h = Math.max(n.v * k, 3); n.slot = Math.max(n.h, minSlot); });
@@ -406,7 +405,7 @@ function drawFlow(d) {
   nodes += `<rect x="${xC}" y="${cy}" width="${centerW}" height="${C * k}" style="fill:var(--c-income)"/>`;
   if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--c-over)"/>`;
 
-  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 2}px` : `left:${xR + nodeW + 2}px`};max-width:${labelW - 2}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.tone ? ` ${n.tone}` : ""}">${n.sub}</span>` : ""}</button>`;
+  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 2}px` : `left:${xR + nodeW + 2}px`};max-width:${labelW - 2}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.warn ? " warn" : ""}">${n.sub}</span>` : ""}</button>`;
   left.forEach(n => { labels += label(n, "l"); });
   right.forEach(n => { labels += label(n, "r"); });
   labels += `<div class="lab c" style="left:${xC + centerW / 2}px;top:${cy - 8}px"><span class="n">Available funds</span><span class="a">${pounds(T)}</span></div>`;
@@ -436,10 +435,6 @@ function drawFlow(d) {
   document.querySelector("#flow-in").textContent = money(incSum);
   document.querySelector("#flow-out").textContent = money(expSum);
   document.querySelector("#flow-net").textContent = `${net < 0 ? "−" : ""}${money(Math.abs(net))}`;
-  state.budget.categories.forEach(item => {
-    const swatch = document.querySelector(`[data-swatch="${item.className}"]`);
-    if (swatch) swatch.style.background = spendColor(item.className, d[item.className], item.limit);
-  });
   const status = document.querySelector("#flow-status");
   const [kind, glyph, text] = over > .5 ? ["warn", "triangle-alert", `Expenditure exceeds available funds by ${pounds(over)}`]
     : goal <= .5 ? ["hold", "minus", "No savings target set"]
