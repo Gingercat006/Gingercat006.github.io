@@ -21,11 +21,11 @@ const state = {
       { key: "2026-12", label: "December" }
     ],
     categories: [
-      { name: "Groceries", icon: "✳", className: "grocery", spent: 0, limit: 600 },
-      { name: "Rent", icon: "⌂", className: "rent", spent: 0, limit: 550 },
-      { name: "Bills", icon: "▤", className: "bills", spent: 0, limit: 400 },
-      { name: "Travel", icon: "↗", className: "travel", spent: 0, limit: 500 },
-      { name: "Leisure", icon: "♡", className: "leisure", spent: 0, limit: 750 }
+      { name: "Groceries", icon: "shopping-basket", className: "grocery", spent: 0, limit: 600 },
+      { name: "Rent", icon: "house", className: "rent", spent: 0, limit: 550 },
+      { name: "Bills", icon: "receipt-pound-sterling", className: "bills", spent: 0, limit: 400 },
+      { name: "Travel", icon: "train-front", className: "travel", spent: 0, limit: 500 },
+      { name: "Leisure", icon: "ticket", className: "leisure", spent: 0, limit: 750 }
     ],
     income: [
       { id: "salary", name: "Salary", amount: 0 },
@@ -82,11 +82,53 @@ state.budget.categories.forEach(item => { item.spent = ledgerTotal(item.classNam
 state.budget.income.forEach(item => { item.amount = ledgerTotal(item.id); });
 state.budget.spent = round2(state.budget.categories.reduce((sum, item) => sum + item.spent, 0));
 
+// Icons are from Lucide (lucide.dev, ISC licence), inlined so the prototype stays dependency-free.
+const iconPaths = {
+  "arrow-down": '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  "arrow-left-right": '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+  "arrow-right": '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  "arrow-up": '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+  "badge-percent": '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m15 9-6 6"/><path d="M9 9h.01"/><path d="M15 15h.01"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  "calendar-clock": '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/>',
+  "chart-pie": '<path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+  coins: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+  ellipsis: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  "file-text": '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  hourglass: '<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  "layout-dashboard": '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  lightbulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  "list-checks": '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+  menu: '<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  minus: '<path d="M5 12h14"/>',
+  "piggy-bank": '<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  "receipt-pound-sterling": '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 13h5"/><path d="M10 17V9.5a2.5 2.5 0 0 1 5 0"/><path d="M8 17h7"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  "shopping-basket": '<path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/>',
+  "tent-tree": '<circle cx="4" cy="4" r="2"/><path d="m14 5 3-3 3 3"/><path d="m14 10 3-3 3 3"/><path d="M17 14V2"/><path d="M17 14H7l-5 8h20Z"/><path d="M8 14v8"/><path d="m9 14 5 8"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+  "train-front": '<path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/><path d="m9 15-1-1"/><path d="m15 15 1-1"/><path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5Z"/><path d="m8 19-2 3"/><path d="m16 19 2 3"/>',
+  "triangle-alert": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
+};
+const icon = name => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]}</svg>`;
+
+// Spending shares one hue; a category only takes a signal colour once it nears (90%) or passes its limit.
+const spendColor = (id, spent, limit) => spent > limit ? "var(--c-over)" : spent >= limit * .9 ? "var(--c-near)" : `var(--c-${id})`;
+const catStyle = item => `--cat:${spendColor(item.className, item.spent, item.limit)}`;
+
 const deals = [
   { brand: "FreshMart", logo: "F", logoClass: "", title: "£5 off your next shop", detail: "Spend £40 or more · Ends October 31", value: "£5 back", type: "Groceries" },
   { brand: "Market Lane", logo: "M", logoClass: "rose", title: "Double loyalty points", detail: "On fruit and vegetables this week", value: "2× points", type: "Groceries" },
   { brand: "RailHop", logo: "R", logoClass: "blue", title: "20% off advance fares", detail: "Selected off-peak journeys", value: "20% off", type: "Train" },
-  { brand: "FlyLite", logo: "✈", logoClass: "yellow", title: "£18 off your next flight", detail: "For trips booked in October", value: "£18 off", type: "Flights" }
+  { brand: "FlyLite", logo: "FL", logoClass: "yellow", title: "£18 off your next flight", detail: "For trips booked in October", value: "£18 off", type: "Flights" }
 ];
 
 const money = value => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(value);
@@ -95,13 +137,13 @@ const content = document.querySelector("#page-content");
 const modal = document.querySelector("#app-modal");
 
 function header(eyebrow, title, note, actionLabel, actionType) {
-  return `<div class="page-heading"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1>${note ? `<p class="heading-note">${note}</p>` : ""}</div>${actionLabel ? `<button class="button button-primary" data-action="${actionType}">＋ ${actionLabel}</button>` : ""}</div>`;
+  return `<div class="page-heading"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1>${note ? `<p class="heading-note">${note}</p>` : ""}</div>${actionLabel ? `<button class="button button-primary" data-action="${actionType}">${icon("plus")}${actionLabel}</button>` : ""}</div>`;
 }
 
 function categoriesMarkup(compact = false) {
   return `<div class="category-list">${state.budget.categories.map(item => `
-    <div class="category-row ${item.className}">
-      <span class="category-icon">${item.icon}</span>
+    <div class="category-row ${item.className}" style="${catStyle(item)}">
+      <span class="category-icon">${icon(item.icon)}</span>
       <div class="category-info"><div class="category-name-row"><span class="category-name">${escapeHTML(item.name)}</span><span class="category-spend">${money(item.spent)}</span></div><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>
       <span class="category-limit">${money(item.limit)}${compact ? "" : " budget"}</span>
     </div>`).join("")}</div>`;
@@ -141,12 +183,12 @@ function overviewPage() {
   const status = left < 0 ? "Over budget" : month.forecast ? "Projected" : month.current ? "On track" : "Under budget";
   const badge = month.forecast
     ? `<span class="month-change forecast" title="Average of July, August and September">Forecast</span>`
-    : change === null ? "" : `<span class="month-change${change > 0 ? " up" : ""}" title="Compared with ${previous.label}">${change > 0 ? "↑" : "↓"} ${Math.abs(change).toFixed(1)}% vs ${previous.label.slice(0, 3)}</span>`;
+    : change === null ? "" : `<span class="month-change${change > 0 ? " up" : ""}" title="Compared with ${previous.label}">${icon(change > 0 ? "arrow-up" : "arrow-down")}${Math.abs(change).toFixed(1)}% vs ${previous.label.slice(0, 3)}</span>`;
   const tightest = [...state.budget.categories].sort((a, b) => b.spent / b.limit - a.spent / a.limit)[0];
-  return `${header("SATURDAY 17 OCTOBER 2026", "Every bill, one account.", "Your accounts, budget and commitments in one view.", "Add expense", "expense")}
+  return `${header("Saturday 17 October 2026", "Every bill, one account.", "Your accounts, budget and commitments in one view.", "Add expense", "expense")}
     <div class="dashboard-grid">
       <article class="card balance-card">
-        <div class="balance-top"><span class="eyebrow">${month.label.toUpperCase()} ${month.forecast ? "FORECAST" : "SPENDING"}</span><div class="balance-actions"><select class="period-select" id="overview-month" aria-label="Budget month">${[...months].reverse().map(item => `<option value="${item.key}"${item.key === month.key ? " selected" : ""}>${item.label}${item.forecast ? " (forecast)" : ""}</option>`).join("")}</select><button type="button" class="text-link balance-edit" data-action="edit-monthly-budget" aria-label="Edit monthly budget">Edit</button></div></div>
+        <div class="balance-top"><span class="eyebrow">${month.label} ${month.forecast ? "forecast" : "spending"}</span><div class="balance-actions"><select class="period-select" id="overview-month" aria-label="Budget month">${[...months].reverse().map(item => `<option value="${item.key}"${item.key === month.key ? " selected" : ""}>${item.label}${item.forecast ? " (forecast)" : ""}</option>`).join("")}</select><button type="button" class="text-link balance-edit" data-action="edit-monthly-budget" aria-label="Edit monthly budget">Edit</button></div></div>
         <div class="balance-amount">${money(month.spent)}</div><p class="balance-caption">${month.forecast ? "Projected" : "Spent"} against a ${money(state.budget.total)} monthly budget</p>
         <div class="balance-progress"><div class="progress-meta"><span>${progressNote}</span><strong>${percentage}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, percentage)}%"></div></div><div class="balance-foot"><span>${leftNote}</span><strong>${status}</strong></div></div>
       </article>
@@ -157,21 +199,21 @@ function overviewPage() {
         <div class="chart-labels">${months.map(item => `<span title="${item.label}">${item.label.slice(0, 3)}</span>`).join("")}</div>
       </article>
       <section>
-        <div class="section-heading"><h2>Budget by category</h2><button class="text-link" data-page="budget">View budget ↗</button></div>
+        <div class="section-heading"><h2>Budget by category</h2><button class="text-link" data-page="budget">View budget${icon("arrow-right")}</button></div>
         <article class="card category-card">${categoriesMarkup(true)}<p class="category-note">${tightest.name} has used ${Math.round(tightest.spent / tightest.limit * 100)}% of its budget.</p></article>
       </section>
       <section>
-        <div class="section-heading"><h2>Available offers</h2><button class="text-link" data-page="deals">All offers ↗</button></div>
+        <div class="section-heading"><h2>Available offers</h2><button class="text-link" data-page="deals">All offers${icon("arrow-right")}</button></div>
         <article class="card deal-card">
           <div class="deal-list">${deals.slice(0, 3).map(deal => `<div class="deal-item"><span class="deal-logo ${deal.logoClass}">${deal.logo}</span><span class="deal-copy"><strong>${deal.title}</strong><small>${deal.brand} · ${deal.detail.split(" · ")[0]}</small></span><span class="deal-value">${deal.value}</span></div>`).join("")}</div>
         </article>
       </section>
       <section>
-        <div class="section-heading"><h2>Savings goals</h2><button class="text-link" data-page="trips">All goals ↗</button></div>
-        <article class="card trip-card"><span class="trip-date"><strong>22</strong><small>NOV</small></span><span class="trip-copy"><strong>Cabin weekend</strong><small>${money(420)} saved of ${money(900)}</small></span><span class="trip-progress"><span style="width:47%;display:block"></span></span></article>
+        <div class="section-heading"><h2>Savings goals</h2><button class="text-link" data-page="trips">All goals${icon("arrow-right")}</button></div>
+        <article class="card trip-card"><span class="trip-date"><strong>22</strong><small>Nov</small></span><span class="trip-copy"><strong>Cabin weekend</strong><small>${money(420)} saved of ${money(900)}</small></span><span class="trip-progress"><span style="width:47%;display:block"></span></span></article>
       </section>
       <section>
-        <div class="section-heading"><h2>Shared household</h2><button class="text-link" data-page="home">View household ↗</button></div>
+        <div class="section-heading"><h2>Shared household</h2><button class="text-link" data-page="home">View household${icon("arrow-right")}</button></div>
         <article class="card home-card"><div class="home-main"><div class="home-members"><span class="avatar">CL</span><span class="avatar avatar-lilac">MC</span><span class="avatar avatar-blue">LS</span></div><span class="home-copy"><strong>Willow House</strong><small>3 members · All bills up to date</small></span><span class="bill-total">${money(218)}<small>due this week</small></span></div></article>
       </section>
     </div>`;
@@ -179,8 +221,8 @@ function overviewPage() {
 
 function budgetPage() {
   const flow = state.budgetView === "flow";
-  return `${header("BUDGET · OCTOBER 2026", "Monthly budget", "Planned and actual spending for October.", "Add expense", "expense")}
-    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Flowchart</button></div>${flow ? `<span class="view-hint">Hover to magnify · click streams to select one or more</span>` : ""}</div>
+  return `${header("Budget · October 2026", "Monthly budget", "Planned and actual spending for October.", "Add expense", "expense")}
+    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Flowchart</button></div></div>
     ${flow ? flowMarkup() : budgetListMarkup()}`;
 }
 
@@ -189,21 +231,21 @@ function budgetListMarkup() {
   const tightest = [...state.budget.categories].sort((a, b) => b.spent / b.limit - a.spent / a.limit)[0];
   const recent = [...state.transactions].sort((a, b) => b.day - a.day).slice(0, 5);
   return `<div class="view-grid"><div>
-      <article class="card balance-card"><div class="balance-top"><span class="eyebrow">OCTOBER SPENDING</span><span class="eyebrow">MONTHLY BUDGET</span></div><div class="balance-amount">${money(spent)}</div><p class="balance-caption">of ${money(total)} budgeted · ${money(Math.max(0, total - spent))} remaining</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, spent / total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(spent / total * 100)}% of monthly budget</span><strong>${spent > total ? "Over budget" : "On track"}</strong></div></div></article>
+      <article class="card balance-card"><div class="balance-top"><span class="eyebrow">October spending</span><span class="eyebrow">Monthly budget</span></div><div class="balance-amount">${money(spent)}</div><p class="balance-caption">of ${money(total)} budgeted · ${money(Math.max(0, total - spent))} remaining</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, spent / total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(spent / total * 100)}% of monthly budget</span><strong>${spent > total ? "Over budget" : "On track"}</strong></div></div></article>
       <div class="section-heading"><h2>Categories</h2><button class="text-link" data-action="edit-budget">Edit budget</button></div>
-      <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line ${item.className}"><strong><span class="budget-icon">${item.icon}</span>${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
+      <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line ${item.className}" style="${catStyle(item)}"><strong><span class="budget-icon">${icon(item.icon)}</span>${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
     </div><div>
       <article class="card panel"><div class="panel-heading"><div><h2>Recent transactions</h2><p>The five most recent entries.</p></div></div>${recent.map(tx => {
         const branch = branchInfo(tx.category);
         const category = state.budget.categories.find(item => item.className === tx.category);
-        return `<div class="iou-row ${tx.category}"><span class="deal-logo tx-logo">${category ? category.icon : "£"}</span><span class="iou-copy"><strong>${escapeHTML(tx.name)}</strong><small>${escapeHTML(branch.name)} · October ${tx.day}</small></span><span class="iou-amount${branch.kind === "in" ? " positive" : ""}">${branch.kind === "in" ? "+" : "−"}${money(tx.amount)}</span></div>`;
+        return `<div class="iou-row ${tx.category}"><span class="deal-logo tx-logo">${icon(category ? category.icon : "coins")}</span><span class="iou-copy"><strong>${escapeHTML(tx.name)}</strong><small>${escapeHTML(branch.name)} · October ${tx.day}</small></span><span class="iou-amount${branch.kind === "in" ? " positive" : ""}">${branch.kind === "in" ? "+" : "−"}${money(tx.amount)}</span></div>`;
       }).join("")}</article>
-      <article class="card panel"><div class="panel-heading"><div><h2>Spending insight</h2><p>Category closest to its limit.</p></div><span class="deal-logo">✳</span></div><p>${tightest.name} has used ${Math.round(tightest.spent / tightest.limit * 100)}% of its ${money(tightest.limit)} budget, with ${money(Math.max(0, tightest.limit - tightest.spent))} remaining for October.</p></article>
+      <article class="card panel"><div class="panel-heading"><div><h2>Spending insight</h2><p>Category closest to its limit.</p></div><span class="deal-logo">${icon("lightbulb")}</span></div><p>${tightest.name} has used ${Math.round(tightest.spent / tightest.limit * 100)}% of its ${money(tightest.limit)} budget, with ${money(Math.max(0, tightest.limit - tightest.spent))} remaining for October.</p></article>
     </div></div>`;
 }
 
 // Money flow: income and the opening balance on the left, available funds in the middle, expenditure on the right.
-const flowView = { shown: null, selected: new Set(), raf: 0, observer: null, pointer: null, anchors: [], nodeW: 13 };
+const flowView = { shown: null, selected: new Set(), raf: 0, observer: null, pointer: null, anchors: [], nodeW: 13, tipShown: false };
 // The lens scales up the blocks and labels near the cursor; at the radius edge the scale is back to 1.
 const lens = { radius: 150, maxScale: 1.35 };
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -217,7 +259,7 @@ const ribbon = (x0, a0, b0, x1, a1, b1) => {
 // Every stream in the money flow by id: its name, its colour, and whether it adds money ("in") or takes it away ("out").
 function branchInfo(id) {
   const category = state.budget.categories.find(item => item.className === id);
-  if (category) return { name: category.name, color: `var(--c-${id})`, kind: "out" };
+  if (category) return { name: category.name, color: spendColor(id, category.spent, category.limit), kind: "out" };
   const income = state.budget.income.find(item => item.id === id);
   if (income) return { name: income.name, color: "var(--c-income)", kind: "in" };
   return {
@@ -257,18 +299,22 @@ function setFlowValue(key, value) {
 
 function flowMarkup() {
   const swatch = color => `<i class="flow-swatch" style="background:${color}"></i>`;
-  const row = (key, label, value, color) => `<div class="flow-row">${swatch(color)}<label for="flow-${key}">${escapeHTML(label)}</label><span class="flow-money"><span>£</span><input id="flow-${key}" data-flow-key="${key}" type="number" inputmode="decimal" min="0" step="any" value="${+value.toFixed(2)}"></span></div>`;
+  const row = (key, label, value, color) => `<div class="flow-row"><i class="flow-swatch" data-swatch="${key}" style="background:${color}"></i><label for="flow-${key}">${escapeHTML(label)}</label><span class="flow-money"><span>£</span><input id="flow-${key}" data-flow-key="${key}" type="number" inputmode="decimal" min="0" step="any" value="${+value.toFixed(2)}"></span></div>`;
   const groups = [
     ["Income", state.budget.income.map(item => row(item.id, item.name, item.amount, "var(--c-income)"))],
-    ["Expenditure", state.budget.categories.map(item => row(item.className, item.name, item.spent, `var(--c-${item.className})`))],
+    ["Expenditure", state.budget.categories.map(item => row(item.className, item.name, item.spent, branchInfo(item.className).color))],
     ["Balance and target", [row("balance", "Opening balance", state.budget.balance, "var(--c-balance)"), row("goal", "Monthly savings target", state.budget.goal, "var(--c-jar)")]]
   ];
   return `<div class="flow-view">
     <article class="card flow-card">
-      <div class="flow-summary" aria-live="polite"><div class="flow-stat"><span>Income</span><b id="flow-in"></b></div><div class="flow-stat"><span>Expenditure</span><b id="flow-out"></b></div><div class="flow-stat"><span>Net income</span><b id="flow-net"></b></div><div class="flow-chip" id="flow-chip"><i></i><span></span></div></div>
+      <div class="flow-summary" aria-live="polite">
+        <div class="flow-hero" id="flow-hero"><span id="flow-left-label">Left to spend in October</span><b id="flow-left"></b><small id="flow-left-note"></small></div>
+        <dl class="flow-stats"><div><dt>Income</dt><dd id="flow-in"></dd></div><div><dt>Expenditure</dt><dd id="flow-out"></dd></div><div><dt>Net income</dt><dd id="flow-net"></dd></div></dl>
+        <p class="flow-status" id="flow-status"><i></i><span></span></p>
+      </div>
       <div class="flow-cols" aria-hidden="true"><span>Income</span><span>October</span><span>Expenditure</span></div>
       <div class="flow" id="flow"></div>
-      <div class="flow-legend"><span>${swatch("var(--c-income)")}Income</span><span>${swatch("var(--c-balance)")}Opening and remaining balance</span><span>${swatch("var(--c-jar)")}Savings jar, target met</span><span>${swatch("repeating-linear-gradient(135deg,var(--ghost-bg) 0 2px,var(--ghost) 2px 4px)")}Savings jar, pending until income covers it</span></div>
+      <div class="flow-legend"><span>${swatch("var(--c-income)")}Income</span><span>${swatch("var(--c-balance)")}Opening and remaining balance</span><span>${swatch("var(--c-grocery)")}Spending</span><span>${swatch("var(--c-near)")}Near budget limit</span><span>${swatch("var(--c-jar)")}Savings jar</span><span>${swatch("repeating-linear-gradient(135deg,var(--ghost-bg) 0 2px,var(--ghost) 2px 4px)")}Savings jar, pending until income covers it</span></div>
     </article>
     <article class="card panel flow-history" aria-live="polite">
       <div class="panel-heading"><div><h2>Transaction history</h2><p id="history-note"></p></div><button class="button button-small" data-action="flow-clear" id="history-clear" hidden>Clear selection</button></div>
@@ -300,10 +346,11 @@ function drawFlow(d) {
 
   const right = state.budget.categories.filter(item => d[item.className] > .5).sort((a, b) => d[b.className] - d[a.className]).map(item => {
     const v = d[item.className];
-    return { id: item.className, v, label: item.name, color: `var(--c-${item.className})`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of budget` : "", warn: v > item.limit };
+    const tone = v > item.limit ? "warn" : v >= item.limit * .9 ? "near" : "";
+    return { id: item.className, v, label: item.name, color: spendColor(item.className, v, item.limit), sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of budget` : "", tone };
   });
   if (remaining > .5) right.push({ id: "remain", v: remaining, label: "Remaining balance", color: "var(--c-balance)" });
-  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, color: met ? "var(--c-jar)" : "url(#flow-hatch)", sub: met ? "Target met" : `${pounds(goal - Math.max(0, net))} short` });
+  if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, color: met ? "var(--c-jar)" : "url(#flow-hatch)", sub: met ? "Target met" : `${pounds(goal - Math.max(0, net))} short`, tone: met ? "good" : "" });
 
   const place = list => {
     list.forEach(n => { n.h = Math.max(n.v * k, 3); n.slot = Math.max(n.h, minSlot); });
@@ -359,7 +406,7 @@ function drawFlow(d) {
   nodes += `<rect x="${xC}" y="${cy}" width="${centerW}" height="${C * k}" style="fill:var(--c-income)"/>`;
   if (over > .5) nodes += `<rect x="${xC}" y="${cy + T * k}" width="${centerW}" height="${over * k}" style="fill:var(--c-over)"/>`;
 
-  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 2}px` : `left:${xR + nodeW + 2}px`};max-width:${labelW - 2}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.warn ? " warn" : ""}">${n.sub}</span>` : ""}</button>`;
+  const label = (n, side) => `<button type="button" class="lab ${side}${n.ghost ? " ghost" : ""}" data-id="${n.id}" aria-pressed="false" style="${side === "l" ? `right:${W - xL + 2}px` : `left:${xR + nodeW + 2}px`};max-width:${labelW - 2}px;top:${n.cy}px"><span class="n" title="${escapeHTML(n.label)}">${escapeHTML(n.label)}</span><span class="a">${pounds(n.v)}</span>${n.sub ? `<span class="s${n.tone ? ` ${n.tone}` : ""}">${n.sub}</span>` : ""}</button>`;
   left.forEach(n => { labels += label(n, "l"); });
   right.forEach(n => { labels += label(n, "r"); });
   labels += `<div class="lab c" style="left:${xC + centerW / 2}px;top:${cy - 8}px"><span class="n">Available funds</span><span class="a">${pounds(T)}</span></div>`;
@@ -380,17 +427,27 @@ function drawFlow(d) {
   void flow.offsetHeight;
   flow.classList.remove("drawing");
 
+  // The headline is what is left of October's budget; income, expenditure and net income sit beside it.
+  const toSpend = state.budget.total - expSum;
+  document.querySelector("#flow-hero").classList.toggle("over", toSpend < 0);
+  document.querySelector("#flow-left-label").textContent = toSpend < 0 ? "Over October's budget by" : "Left to spend in October";
+  document.querySelector("#flow-left").textContent = money(Math.abs(toSpend));
+  document.querySelector("#flow-left-note").textContent = `of your ${money(state.budget.total)} monthly budget`;
   document.querySelector("#flow-in").textContent = money(incSum);
   document.querySelector("#flow-out").textContent = money(expSum);
   document.querySelector("#flow-net").textContent = `${net < 0 ? "−" : ""}${money(Math.abs(net))}`;
-  const chip = document.querySelector("#flow-chip");
-  const [kind, icon, text] = over > .5 ? ["warn", "!", `Expenditure exceeds available funds by ${pounds(over)}`]
-    : goal <= .5 ? ["hold", "–", "No savings target set"]
-    : met ? ["ok", "✓", `${pounds(goal)} set aside in the Savings jar`]
-    : ["hold", "…", `${pounds(goal - Math.max(0, net))} short of the ${pounds(goal)} savings target`];
-  chip.className = `flow-chip ${kind}`;
-  chip.querySelector("i").textContent = icon;
-  chip.querySelector("span").textContent = text;
+  state.budget.categories.forEach(item => {
+    const swatch = document.querySelector(`[data-swatch="${item.className}"]`);
+    if (swatch) swatch.style.background = spendColor(item.className, d[item.className], item.limit);
+  });
+  const status = document.querySelector("#flow-status");
+  const [kind, glyph, text] = over > .5 ? ["warn", "triangle-alert", `Expenditure exceeds available funds by ${pounds(over)}`]
+    : goal <= .5 ? ["hold", "minus", "No savings target set"]
+    : met ? ["ok", "check", `${pounds(goal)} set aside in the Savings jar`]
+    : ["hold", "hourglass", `${pounds(goal - Math.max(0, net))} short of the ${pounds(goal)} savings target`];
+  status.className = `flow-status ${kind}`;
+  status.querySelector("i").innerHTML = icon(glyph);
+  status.querySelector("span").textContent = text;
   return true;
 }
 
@@ -450,7 +507,7 @@ function renderHistory() {
   document.querySelector("#history-clear").hidden = !selected.length;
   document.querySelector("#history-chips").innerHTML = selected.map(id => {
     const branch = branchInfo(id);
-    return `<button type="button" class="history-chip" data-action="flow-deselect" data-id="${id}" aria-label="Remove ${escapeHTML(branch.name)} from the selection"><i class="flow-swatch" style="background:${branch.color}"></i>${escapeHTML(branch.name)}<b aria-hidden="true">×</b></button>`;
+    return `<button type="button" class="history-chip" data-action="flow-deselect" data-id="${id}" aria-label="Remove ${escapeHTML(branch.name)} from the selection"><i class="flow-swatch" style="background:${branch.color}"></i>${escapeHTML(branch.name)}${icon("x")}</button>`;
   }).join("");
   body.innerHTML = rows.length ? rows.map(row => {
     const branch = branchInfo(row.id);
@@ -526,6 +583,11 @@ function mountBudget() {
     selectionChanged();
   });
   flowView.pointer = null;
+  flow.addEventListener("pointerenter", event => {
+    if (flowView.tipShown || event.pointerType === "touch" || flowView.narrow) return;
+    flowView.tipShown = true;
+    showFlowTip(event);
+  });
   flow.addEventListener("pointermove", event => {
     // Touch has no hover, and narrow charts have no room for magnified labels.
     if (event.pointerType === "touch" || flowView.narrow) return;
@@ -548,57 +610,75 @@ function mountBudget() {
   flowView.observer.observe(flow);
 }
 
+// The first time the pointer enters the chart, a small tip next to it explains how to use it, then fades.
+function showFlowTip(event) {
+  const card = document.querySelector(".flow-card");
+  if (!card) return;
+  const box = card.getBoundingClientRect();
+  const tip = document.createElement("div");
+  tip.className = "flow-tip";
+  tip.textContent = "Hover to magnify a stream. Click streams to filter the transactions below.";
+  // Open towards the middle of the chart so the tip never covers the labels at either edge.
+  const x = event.clientX - box.left;
+  if (x > box.width / 2) tip.style.right = `${box.width - x + 16}px`;
+  else tip.style.left = `${x + 16}px`;
+  tip.style.top = `${event.clientY - box.top + 20}px`;
+  card.append(tip);
+  window.setTimeout(() => tip.classList.add("out"), 3600);
+  window.setTimeout(() => tip.remove(), 4000);
+}
+
 function dealsPage() {
-  return `${header("OFFERS", "Offers & cashback", "Current discounts and cashback from partner retailers.", "Find offers", "search-deals")}
-    <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Recommended offers</h2><span class="eyebrow">4 NEW THIS WEEK</span></div><div class="deal-grid">${dealsMarkup()}</div></div>
-    <div><article class="card panel"><div class="panel-heading"><div><h2>Cashback balance</h2><p>Cashback earned to date.</p></div><span class="deal-logo">£</span></div><div class="chart-total">${money(23.4)}<span>available</span></div><p>Cashback is added when a saved offer is used.</p><button class="button button-lime button-small" data-action="cashback">View cashback</button></article>
+  return `${header("Offers", "Offers & cashback", "Current discounts and cashback from partner retailers.", "Find offers", "search-deals")}
+    <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Recommended offers</h2><span class="eyebrow">4 new this week</span></div><div class="deal-grid">${dealsMarkup()}</div></div>
+    <div><article class="card panel"><div class="panel-heading"><div><h2>Cashback balance</h2><p>Cashback earned to date.</p></div><span class="deal-logo">${icon("coins")}</span></div><div class="chart-total">${money(23.4)}<span>available</span></div><p>Cashback is added when a saved offer is used.</p><button class="button button-lime button-small" data-action="cashback">View cashback</button></article>
     <article class="card panel"><div class="panel-heading"><div><h2>Travel offers</h2><p>Discounted rail and air fares.</p></div></div>${deals.filter(d => d.type !== "Groceries").map(d => `<div class="deal-item" style="margin:14px 0"><span class="deal-logo ${d.logoClass}">${d.logo}</span><span class="deal-copy"><strong>${d.title}</strong><small>${d.brand} · ${d.detail}</small></span><span class="deal-value">${d.value}</span></div>`).join("")}</article>
     <p class="fine-print">Offers shown are sample content for this prototype. Availability, eligibility and terms are not verified.</p></div></div>`;
 }
 
 function tripsPage() {
-  return `${header("SAVINGS", "Travel & savings goals", "Shared and personal savings goals, with current travel offers.", "New savings goal", "goal")}
-    <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Shared savings goal</h2><button class="text-link" data-action="invite">Invite member ↗</button></div>
-      <article class="card goal-card"><div class="goal-top"><div class="goal-title"><span class="deal-logo">✈</span><span><strong>Cabin weekend</strong><small>Shared with Mersey McFadden and Lucy Shen · November 22–24</small></span></div><span class="offer-tag">On track</span></div><div class="goal-amount">${money(420)} <small>of ${money(900)}</small></div><div class="goal-progress"><span style="width:47%"></span></div><div class="goal-foot"><span>47% saved</span><span>${money(480)} remaining</span></div><div class="section-heading"><span class="card-title">Contributions</span><button class="text-link" data-action="contribute">Add contribution</button></div><div class="member-list"><div class="member-row"><span class="avatar">CL</span><span class="member-name">Caroline Leathem<small>Your contribution</small></span><strong>${money(180)}</strong></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Mersey McFadden<small>Added October 13</small></span><strong>${money(140)}</strong></div><div class="member-row"><span class="avatar avatar-blue">LS</span><span class="member-name">Lucy Shen<small>Added October 15</small></span><strong>${money(100)}</strong></div></div></article>
-      <article class="card panel"><div class="panel-heading"><div><h2>Planned goals</h2><p>Goals you have not started saving for.</p></div><button class="button button-small" data-action="destination">＋ Add goal</button></div><div class="empty-note">No planned goals. Add a goal to start tracking it.</div></article>
-    </div><div><article class="card panel"><div class="panel-heading"><div><h2>Travel offers</h2><p>Discounted fares for upcoming trips.</p></div><span class="deal-logo blue">↗</span></div>${deals.filter(d => d.type !== "Groceries").map(d => `<div class="deal-item" style="margin:14px 0"><span class="deal-logo ${d.logoClass}">${d.logo}</span><span class="deal-copy"><strong>${d.title}</strong><small>${d.brand} · ${d.detail}</small></span></div>`).join("")}</article><p class="fine-print">Savings goals are planning tools only. No payments or bookings are made in this demo.</p></div></div>`;
+  return `${header("Savings", "Travel & savings goals", "Shared and personal savings goals, with current travel offers.", "New savings goal", "goal")}
+    <div class="view-grid"><div><div class="section-heading" style="margin-top:0"><h2>Shared savings goal</h2><button class="text-link" data-action="invite">Invite member</button></div>
+      <article class="card goal-card"><div class="goal-top"><div class="goal-title"><span class="deal-logo">${icon("tent-tree")}</span><span><strong>Cabin weekend</strong><small>Shared with Mersey McFadden and Lucy Shen · November 22–24</small></span></div><span class="offer-tag">On track</span></div><div class="goal-amount">${money(420)} <small>of ${money(900)}</small></div><div class="goal-progress"><span style="width:47%"></span></div><div class="goal-foot"><span>47% saved</span><span>${money(480)} remaining</span></div><div class="section-heading"><span class="card-title">Contributions</span><button class="text-link" data-action="contribute">Add contribution</button></div><div class="member-list"><div class="member-row"><span class="avatar">CL</span><span class="member-name">Caroline Leathem<small>Your contribution</small></span><strong>${money(180)}</strong></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Mersey McFadden<small>Added October 13</small></span><strong>${money(140)}</strong></div><div class="member-row"><span class="avatar avatar-blue">LS</span><span class="member-name">Lucy Shen<small>Added October 15</small></span><strong>${money(100)}</strong></div></div></article>
+      <article class="card panel"><div class="panel-heading"><div><h2>Planned goals</h2><p>Goals you have not started saving for.</p></div><button class="button button-small" data-action="destination">${icon("plus")}Add goal</button></div><div class="empty-note">No planned goals. Add a goal to start tracking it.</div></article>
+    </div><div><article class="card panel"><div class="panel-heading"><div><h2>Travel offers</h2><p>Discounted fares for upcoming trips.</p></div><span class="deal-logo blue">${icon("train-front")}</span></div>${deals.filter(d => d.type !== "Groceries").map(d => `<div class="deal-item" style="margin:14px 0"><span class="deal-logo ${d.logoClass}">${d.logo}</span><span class="deal-copy"><strong>${d.title}</strong><small>${d.brand} · ${d.detail}</small></span></div>`).join("")}</article><p class="fine-print">Savings goals are planning tools only. No payments or bookings are made in this demo.</p></div></div>`;
 }
 
 function homePage() {
-  return `${header("SHARED HOUSEHOLD", "Willow House", "Shared bills and each member's share.", "Invite member", "invite")}
+  return `${header("Shared household", "Willow House", "Shared bills and each member's share.", "Invite member", "invite")}
     <div class="view-grid"><div>
       <article class="card panel"><div class="panel-heading"><div><h2>October shared bills</h2><p>Due dates and payment status for October.</p></div><span class="offer-tag">3 members</span></div>
       <div class="home-main" style="margin-bottom:15px"><div class="home-members"><span class="avatar">CL</span><span class="avatar avatar-lilac">MC</span><span class="avatar avatar-blue">LS</span></div><span class="home-copy"><strong>Shared total for October</strong><small>Your share: ${money(72.67)}</small></span><span class="bill-total">${money(218)}<small>all bills</small></span></div>
       ${[["Electricity", "Bright Energy · Due October 21", 86, "Due soon"], ["Broadband", "ConnectNow · Paid October 4", 42, "Paid"], ["Water", "City Water · Paid October 8", 90, "Paid"]].map(b => `<div class="bill-row"><strong>${b[0]}</strong><span class="bill-status">${b[3]}</span><small>${b[1]}</small><strong>${money(b[2])}</strong></div>`).join("")}
-      <div class="section-heading"><span class="card-title">October split</span><button class="text-link" data-action="add-bill">＋ Add a bill</button></div>
+      <div class="section-heading"><span class="card-title">October split</span><button class="text-link" data-action="add-bill">${icon("plus")}Add a bill</button></div>
       ${[["Caroline Leathem", 72.67, ""], ["Mersey McFadden", 72.67, "avatar-lilac"], ["Lucy Shen", 72.66, "avatar-blue"]].map(m => `<div class="member-row" style="padding:7px 0"><span class="avatar ${m[2]}">${m[0].split(" ").map(s => s[0]).join("")}</span><span class="member-name">${m[0]}<small>Equal share</small></span><strong>${money(m[1])}</strong></div>`).join("")}</article>
-    </div><div>    <article class="card panel"><div class="panel-heading"><div><h2>Members</h2><p>People sharing this household.</p></div><button class="button button-small" data-action="invite">＋ Invite</button></div><div class="member-list"><div class="member-row"><span class="avatar">CL</span><span class="member-name">Caroline Leathem<small>You · Admin</small></span></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Mersey McFadden<small>Joined September 2</small></span></div><div class="member-row"><span class="avatar avatar-blue">LS</span><span class="member-name">Lucy Shen<small>Joined September 4</small></span></div></div></article>
-      <article class="card panel"><div class="panel-heading"><div><h2>About shared bills</h2><p>How the split is calculated.</p></div><span class="deal-logo">✳</span></div><p>Bills are split equally between members. Add bills as they arrive so each share stays current. This demo does not connect to providers or move money.</p></article>
+    </div><div>    <article class="card panel"><div class="panel-heading"><div><h2>Members</h2><p>People sharing this household.</p></div><button class="button button-small" data-action="invite">${icon("plus")}Invite</button></div><div class="member-list"><div class="member-row"><span class="avatar">CL</span><span class="member-name">Caroline Leathem<small>You · Admin</small></span></div><div class="member-row"><span class="avatar avatar-lilac">MC</span><span class="member-name">Mersey McFadden<small>Joined September 2</small></span></div><div class="member-row"><span class="avatar avatar-blue">LS</span><span class="member-name">Lucy Shen<small>Joined September 4</small></span></div></div></article>
+      <article class="card panel"><div class="panel-heading"><div><h2>About shared bills</h2><p>How the split is calculated.</p></div><span class="deal-logo">${icon("info")}</span></div><p>Bills are split equally between members. Add bills as they arrive so each share stays current. This demo does not connect to providers or move money.</p></article>
     </div></div>`;
 }
 
 function owedPage() {
   const incoming = state.ious.filter(item => item.direction === "in").reduce((sum, item) => sum + item.amount, 0);
   const outgoing = state.ious.filter(item => item.direction === "out").reduce((sum, item) => sum + item.amount, 0);
-  return `${header("DEBTS", "Debts", "Money owed to you and by you.", "Record a debt", "iou")}
+  return `${header("Debts", "Debts", "Money owed to you and by you.", "Record a debt", "iou")}
     <div class="view-grid"><div>
       <article class="card panel"><div class="panel-heading"><div><h2>Outstanding debts</h2><p>Amounts owed between you and others.</p></div><span class="offer-tag">Private</span></div>
       <div class="owed-highlight"><div class="owed-line"><span>Owed to you</span><strong class="positive">${money(incoming)}</strong></div><div class="owed-line"><span>You owe</span><strong class="negative">${money(outgoing)}</strong></div></div>
       <div class="section-heading"><h2>Recent records</h2></div>
       ${state.ious.map(item => `<div class="iou-row"><span class="avatar ${item.direction === "in" ? "avatar-lilac" : "avatar-peach"}">${item.name.split(" ").map(s => s[0]).join("")}</span><span class="iou-copy"><strong>${escapeHTML(item.name)}</strong><small>${escapeHTML(item.detail)}</small></span><span class="iou-amount ${item.direction === "in" ? "positive" : "negative"}">${item.direction === "in" ? "+" : "−"}${money(item.amount)}<small>${item.direction === "in" ? "owed to you" : "you owe"}</small></span></div>`).join("")}
       </article></div><div>
-      <article class="card panel"><div class="panel-heading"><div><h2>About these records</h2><p>Records are for reference only.</p></div><span class="deal-logo">↔</span></div><p>No payment requests are sent, and there are no bank connections in this prototype.</p><button class="button button-small" data-action="iou">＋ Record a debt</button></article>
+      <article class="card panel"><div class="panel-heading"><div><h2>About these records</h2><p>Records are for reference only.</p></div><span class="deal-logo">${icon("arrow-left-right")}</span></div><p>No payment requests are sent, and there are no bank connections in this prototype.</p><button class="button button-small" data-action="iou">${icon("plus")}Record a debt</button></article>
     </div></div>`;
 }
 
 function assistantPage() {
-  return `${header("ASSISTANT", "Financial assistant", "Automated help with financial admin, always subject to your approval.", null, null)}
-    <div class="assistant-hero"><div><div class="eyebrow">DEMO MODE · NO ACCOUNTS CONNECTED</div><h2>Automated financial admin</h2><p>A preview of tasks an assistant could perform. This prototype shows sample output only; it does not access accounts, submit forms or change documents.</p></div><span class="button button-lime">✳ Demo mode</span></div>
+  return `${header("Assistant", "Financial assistant", "Automated help with financial admin, always subject to your approval.", null, null)}
+    <div class="assistant-hero"><div><div class="eyebrow">Demo mode · no accounts connected</div><h2>Automated financial admin</h2><p>A preview of tasks an assistant could perform. This prototype shows sample output only; it does not access accounts, submit forms or change documents.</p></div><span class="button button-lime">Demo mode</span></div>
     <div class="agent-grid">
-      <article class="card agent-card"><div class="agent-head"><span class="deal-logo">◷</span><span><strong>Bill monitoring</strong><small>Recurring bills and due dates</small></span></div><p>Detects changes in recurring bills and sends a reminder before each due date.</p><span class="demo-pill">SAMPLE TASKS ONLY</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-bills">View sample</button></div></article>
-      <article class="card agent-card"><div class="agent-head"><span class="deal-logo rose">▤</span><span><strong>Form preparation</strong><small>Drafts for your review</small></span></div><p>Collects the details a form needs and prepares a draft for you to review before use.</p><span class="demo-pill">REQUIRES YOUR APPROVAL</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-forms">View sample</button></div></article>
-      <article class="card agent-card"><div class="agent-head"><span class="deal-logo blue">⌕</span><span><strong>Document search</strong><small>Bills and receipts</small></span></div><p>Sorts bills and receipts into a searchable list by date and supplier.</p><span class="demo-pill">NO FILES ACCESSED</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-docs">View sample</button></div></article>
-      <article class="card agent-card"><div class="agent-head"><span class="deal-logo yellow">✧</span><span><strong>Spending review</strong><small>Monthly analysis</small></span></div><p>Summarises monthly spending and identifies categories close to their budget.</p><span class="demo-pill">SAMPLE INSIGHTS</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-insights">View sample</button></div></article>
+      <article class="card agent-card"><div class="agent-head"><span class="deal-logo">${icon("calendar-clock")}</span><span><strong>Bill monitoring</strong><small>Recurring bills and due dates</small></span></div><p>Detects changes in recurring bills and sends a reminder before each due date.</p><span class="demo-pill">Sample tasks only</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-bills">View sample</button></div></article>
+      <article class="card agent-card"><div class="agent-head"><span class="deal-logo rose">${icon("file-text")}</span><span><strong>Form preparation</strong><small>Drafts for your review</small></span></div><p>Collects the details a form needs and prepares a draft for you to review before use.</p><span class="demo-pill">Requires your approval</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-forms">View sample</button></div></article>
+      <article class="card agent-card"><div class="agent-head"><span class="deal-logo blue">${icon("search")}</span><span><strong>Document search</strong><small>Bills and receipts</small></span></div><p>Sorts bills and receipts into a searchable list by date and supplier.</p><span class="demo-pill">No files accessed</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-docs">View sample</button></div></article>
+      <article class="card agent-card"><div class="agent-head"><span class="deal-logo yellow">${icon("chart-pie")}</span><span><strong>Spending review</strong><small>Monthly analysis</small></span></div><p>Summarises monthly spending and identifies categories close to their budget.</p><span class="demo-pill">Sample insights</span><div style="margin-top:13px"><button class="button button-small" data-action="agent-insights">View sample</button></div></article>
     </div>
     <p class="fine-print">AI features are illustrative only. No AI service or external integration is connected. In a real product, sensitive actions should require clear permission and your review.</p>`;
 }
@@ -619,6 +699,7 @@ function render() {
   content.innerHTML = page.render();
   page.mount?.();
   document.querySelector("#page-crumb").textContent = page.label;
+  document.querySelector("#assistant-note").textContent = `Categorised ${state.transactions.length} transactions`;
   document.querySelectorAll(".nav-link").forEach(button => button.classList.toggle("active", button.dataset.page === state.page));
   document.querySelector("#sidebar").classList.remove("open");
 }
@@ -631,7 +712,7 @@ function toast(message) {
   window.setTimeout(() => node.remove(), 3200);
 }
 
-function showModal({ eyebrow = "QUICK ACTION", title, copy, fields, submit = "Save", onSubmit }) {
+function showModal({ eyebrow = "Quick action", title, copy, fields, submit = "Save", onSubmit }) {
   document.querySelector("#modal-eyebrow").textContent = eyebrow;
   document.querySelector("#modal-title").textContent = title;
   document.querySelector("#modal-copy").textContent = copy;
@@ -768,4 +849,5 @@ document.querySelector("#mobile-menu").addEventListener("click", () => document.
 document.querySelector(".notification-button").addEventListener("click", () => toast("No new notifications."));
 document.querySelector(".profile-button").addEventListener("click", () => toast("Account settings are not available in this demo."));
 
+document.querySelectorAll("[data-icon]").forEach(node => { node.innerHTML = icon(node.dataset.icon); });
 render();
