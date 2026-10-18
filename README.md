@@ -1,6 +1,6 @@
 # PennyWise
 
-PennyWise is a responsive, dependency-free prototype for everyday budgeting and shared money planning. It brings budget tracking, sample grocery cashback and travel offers, holiday savings, household bills, IOU notes, and demo-only money assistant concepts into one place.
+PennyWise is a responsive, dependency-free prototype for everyday budgeting and shared money planning. It brings budget tracking, sample grocery cashback and travel offers, holiday savings, household bills, debts, and demo-only money assistant concepts into one place.
 
 https://www.canva.com/design/DAHXqBH4RYM/AgU4uyei79Aai9GXTteQdA/edit
 
@@ -11,9 +11,7 @@ This is a static website: the browser runs the HTML, CSS, and JavaScript directl
 
 ### Easiest: open it in your browser
 
-1. Find `index.html` in the project folder.
-2. Double-click it. It should open in your default web browser.
-3. Try the menu on the left. On a phone-sized window, use the menu button in the top-left.
+Go to: https://gingercat006.github.io/
 
 ### Alternative: run a local web server
 
@@ -35,13 +33,12 @@ If you see “python3: command not found”, use the first method or ask for hel
 
 Make sure `index.html`, `styles.css`, and `app.js` are all together in the same project folder. Refresh the browser page after saving changes in VS Code.
 
-## Prototype behavior
+## Prototype behaviour
 
-- Navigate between Overview, Budget, Deals & rewards, Trips & goals, Shared home, Money owed, and Money sidekick.
+- Navigate between Overview, Budget, Deals & rewards, Trips & goals, Shared home, Money owed, and Financial Assistant.
 - Add expenses and IOU notes; changes update the current page in memory.
-- On the Budget page, switch between the category list and a money-flow chart. Move the cursor over the chart to magnify the streams nearest to it, click a stream to follow it on its own, and change the numbers below the chart to see it update.
+- On the Budget page, switch between the category list and a money flow chart. Move the cursor over the chart to magnify the streams nearest to it, click a stream to follow it on its own, and change the numbers below the chart to see it update.
 - Save and unsave sample deals.
-- Use the mobile menu on smaller screens.
 - Try the sample assistant cards to see example responses.
 
 The app uses illustrative data and does not connect to banks, merchants, transport providers, calendars, messaging, AI services, or files. It does not make payments, send invites, book travel, submit forms, or change documents. Data entered into forms is not persisted after a page reload.
