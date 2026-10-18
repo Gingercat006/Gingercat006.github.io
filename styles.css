@@ -18,22 +18,15 @@
   --amber: #a8530a;
   --amber-soft: #fbeedd;
   --danger: #b42318;
-  /* Money flow colours follow the Okabe–Ito palette, chosen to stay distinct with colour-vision deficiency. */
+  /* Data colours follow the Okabe–Ito palette, chosen to stay distinct with colour-vision deficiency. */
   --c-income: #009e73;
   --c-balance: #7d8797;
   --c-jar: #6a4c93;
-  --flow-grocery: #e69f00;
-  --flow-rent: #d55e00;
-  --flow-bills: #0072b2;
-  --flow-travel: #56b4e9;
-  --flow-leisure: #cc79a7;
-  /* Category lists: spending is five shades of one slate hue; a category near (amber) or over (red) its limit stands out. */
-  --c-grocery: #3f5a70;
-  --c-leisure: #557189;
-  --c-travel: #6d88a0;
-  --c-bills: #8aa0b5;
-  --c-rent: #a5b7c8;
-  --c-near: #d9822b;
+  --c-grocery: #e69f00;
+  --c-rent: #d55e00;
+  --c-bills: #0072b2;
+  --c-travel: #56b4e9;
+  --c-leisure: #cc79a7;
   --c-over: #b42318;
   --ghost: #b9bab2;
   --ghost-bg: #efeee8;
@@ -111,7 +104,7 @@ button { color: inherit; }
 .sync-state { color: var(--muted); font-size: 13px; font-weight: 600; }
 .sync-state i { display: inline-block; width: 6px; height: 6px; margin: 0 6px 1px 0; border-radius: 50%; background: var(--accent); }
 .icon-button { position: relative; display: grid; place-items: center; padding: 4px; border: 0; background: transparent; color: var(--ink-2); font-size: 19px; cursor: pointer; }
-.notification-dot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border: 1.5px solid var(--bg); border-radius: 50%; background: var(--c-near); }
+.notification-dot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border: 1.5px solid var(--bg); border-radius: 50%; background: var(--c-rent); }
 .avatar-small { width: 30px; height: 30px; border: 0; cursor: pointer; }
 .mobile-menu { display: none; }
 
@@ -191,8 +184,8 @@ h1 { margin: 10px 0 0; color: var(--ink); font: 800 clamp(30px, 3.4vw, 38px)/1.1
 .deal-item { display: flex; align-items: center; gap: 12px; }
 .deal-logo { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; color: var(--accent); background: var(--accent-soft); font: 800 15px var(--sans); }
 .deal-logo .icon { font-size: 19px; }
-.deal-logo.rose { color: #8f3a64; background: #f5e6ee; }
-.deal-logo.blue { color: #2c5d86; background: #e4edf5; }
+.deal-logo.rose { color: color-mix(in srgb, var(--c-leisure) 70%, #000); background: color-mix(in srgb, var(--c-leisure) 16%, #fff); }
+.deal-logo.blue { color: var(--c-bills); background: color-mix(in srgb, var(--c-bills) 12%, #fff); }
 .deal-logo.yellow { color: var(--amber); background: var(--amber-soft); }
 .deal-copy { flex: 1; min-width: 0; }
 .deal-copy strong { display: block; color: var(--ink); font-size: 15px; font-weight: 700; }

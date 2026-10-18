@@ -120,10 +120,6 @@ const iconPaths = {
 };
 const icon = name => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]}</svg>`;
 
-// Spending shares one hue; a category only takes a signal colour once it nears (90%) or passes its limit.
-const spendColor = (id, spent, limit) => spent > limit ? "var(--c-over)" : spent >= limit * .9 ? "var(--c-near)" : `var(--c-${id})`;
-const catStyle = item => `--cat:${spendColor(item.className, item.spent, item.limit)}`;
-
 const deals = [
   { brand: "FreshMart", logo: "F", logoClass: "", title: "£5 off your next shop", detail: "Spend £40 or more · Ends October 31", value: "£5 back", type: "Groceries" },
   { brand: "Market Lane", logo: "M", logoClass: "rose", title: "Double loyalty points", detail: "On fruit and vegetables this week", value: "2× points", type: "Groceries" },
@@ -142,7 +138,7 @@ function header(eyebrow, title, note, actionLabel, actionType) {
 
 function categoriesMarkup(compact = false) {
   return `<div class="category-list">${state.budget.categories.map(item => `
-    <div class="category-row ${item.className}" style="${catStyle(item)}">
+    <div class="category-row ${item.className}">
       <span class="category-icon">${icon(item.icon)}</span>
       <div class="category-info"><div class="category-name-row"><span class="category-name">${escapeHTML(item.name)}</span><span class="category-spend">${money(item.spent)}</span></div><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>
       <span class="category-limit">${money(item.limit)}${compact ? "" : " budget"}</span>
@@ -233,7 +229,7 @@ function budgetListMarkup() {
   return `<div class="view-grid"><div>
       <article class="card balance-card"><div class="balance-top"><span class="eyebrow">October spending</span><span class="eyebrow">Monthly budget</span></div><div class="balance-amount">${money(spent)}</div><p class="balance-caption">of ${money(total)} budgeted · ${money(Math.max(0, total - spent))} remaining</p><div class="balance-progress"><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, spent / total * 100)}%"></div></div><div class="balance-foot"><span>${Math.round(spent / total * 100)}% of monthly budget</span><strong>${spent > total ? "Over budget" : "On track"}</strong></div></div></article>
       <div class="section-heading"><h2>Categories</h2><button class="text-link" data-action="edit-budget">Edit budget</button></div>
-      <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line ${item.className}" style="${catStyle(item)}"><strong><span class="budget-icon">${icon(item.icon)}</span>${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
+      <article class="card panel">${state.budget.categories.map(item => `<div class="budget-line ${item.className}"><strong><span class="budget-icon">${icon(item.icon)}</span>${escapeHTML(item.name)}</strong><small>${money(item.spent)} / ${money(item.limit)}</small><div class="category-bar"><span style="width:${Math.min(100, item.spent / item.limit * 100)}%"></span></div></div>`).join("")}</article>
     </div><div>
       <article class="card panel"><div class="panel-heading"><div><h2>Recent transactions</h2><p>The five most recent entries.</p></div></div>${recent.map(tx => {
         const branch = branchInfo(tx.category);
@@ -259,7 +255,7 @@ const ribbon = (x0, a0, b0, x1, a1, b1) => {
 // Every stream in the money flow by id: its name, its colour, and whether it adds money ("in") or takes it away ("out").
 function branchInfo(id) {
   const category = state.budget.categories.find(item => item.className === id);
-  if (category) return { name: category.name, color: `var(--flow-${id})`, kind: "out" };
+  if (category) return { name: category.name, color: `var(--c-${id})`, kind: "out" };
   const income = state.budget.income.find(item => item.id === id);
   if (income) return { name: income.name, color: "var(--c-income)", kind: "in" };
   return {
@@ -346,7 +342,7 @@ function drawFlow(d) {
 
   const right = state.budget.categories.filter(item => d[item.className] > .5).sort((a, b) => d[b.className] - d[a.className]).map(item => {
     const v = d[item.className];
-    return { id: item.className, v, label: item.name, color: `var(--flow-${item.className})`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of budget` : "", warn: v > item.limit };
+    return { id: item.className, v, label: item.name, color: `var(--c-${item.className})`, sub: item.limit > 0 ? `${Math.round(v / item.limit * 100)}% of budget` : "", warn: v > item.limit };
   });
   if (remaining > .5) right.push({ id: "remain", v: remaining, label: "Remaining balance", color: "var(--c-balance)" });
   if (goal > .5) right.push({ id: "jar", v: goal, label: "Savings jar", ghost: !met, color: met ? "var(--c-jar)" : "url(#flow-hatch)", sub: met ? "Target met" : `${pounds(goal - Math.max(0, net))} short` });
