@@ -16,45 +16,68 @@
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
         <a class="brand" href="#" aria-label="PennyWise home">
-          <span class="brand-mark">PW</span>
-          <span>Penny<span class="light-brand">Wise</span></span>
+          <!-- A copper penny: bevelled rim, beaded border, embossed "p", a diagonal sheen and a glint. -->
+          <svg class="brand-coin" viewBox="0 0 48 48" aria-hidden="true">
+            <defs>
+              <linearGradient id="coin-rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9d9b0"/><stop offset=".45" stop-color="#c8793b"/><stop offset="1" stop-color="#6a3211"/></linearGradient>
+              <linearGradient id="coin-bevel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3c15"/><stop offset="1" stop-color="#f5cb9b"/></linearGradient>
+              <radialGradient id="coin-face" cx=".34" cy=".28" r=".85"><stop offset="0" stop-color="#f0bd86"/><stop offset=".55" stop-color="#cd8145"/><stop offset="1" stop-color="#944e1e"/></radialGradient>
+              <linearGradient id="coin-letter" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d98d4f"/><stop offset="1" stop-color="#b56a31"/></linearGradient>
+              <linearGradient id="coin-sheen" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+              <radialGradient id="coin-glint"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+              <clipPath id="coin-clip"><circle cx="24" cy="24" r="21"/></clipPath>
+            </defs>
+            <circle cx="24" cy="24" r="21" fill="url(#coin-rim)"/>
+            <circle cx="24" cy="24" r="17.4" fill="url(#coin-bevel)"/>
+            <circle cx="24" cy="24" r="16.4" fill="url(#coin-face)"/>
+            <circle cx="24" cy="24" r="14.3" fill="none" stroke="#7c3c15" stroke-opacity=".35" stroke-dasharray="0 2.25" stroke-linecap="round"/>
+            <g font-family="Figtree, system-ui, sans-serif" font-weight="800" font-size="21" text-anchor="middle">
+              <text x="24.45" y="27.45" fill="#6a3211" fill-opacity=".6">p</text>
+              <text x="23.6" y="26.6" fill="#ffe2bd" fill-opacity=".9">p</text>
+              <text x="24" y="27" fill="url(#coin-letter)">p</text>
+            </g>
+            <g clip-path="url(#coin-clip)"><rect x="9" y="-6" width="11" height="60" fill="url(#coin-sheen)" transform="rotate(38 24 24)"/></g>
+            <ellipse cx="14.2" cy="12.2" rx="6" ry="2.6" fill="url(#coin-glint)" transform="rotate(-42 14.2 12.2)"/>
+            <circle cx="24" cy="24" r="20.6" fill="none" stroke="#5a280c" stroke-opacity=".4" stroke-width=".8"/>
+          </svg>
+          <span>PennyWise</span>
         </a>
 
-        <div class="workspace-label">PERSONAL</div>
+        <div class="workspace-label">Personal</div>
         <nav class="primary-nav" aria-label="Main navigation">
-          <button class="nav-link active" data-page="overview"><span class="nav-icon">⌂</span>Overview</button>
-          <button class="nav-link" data-page="budget"><span class="nav-icon">◷</span>Budget</button>
-          <button class="nav-link" data-page="deals"><span class="nav-icon">✳</span>Offers & cashback<span class="nav-count">4</span></button>
-          <button class="nav-link" data-page="trips"><span class="nav-icon">↗</span>Travel & savings</button>
+          <button class="nav-link active" data-page="overview"><span class="nav-icon" data-icon="layout-dashboard"></span>Overview</button>
+          <button class="nav-link" data-page="budget"><span class="nav-icon" data-icon="wallet"></span>Budget</button>
+          <button class="nav-link" data-page="deals"><span class="nav-icon" data-icon="badge-percent"></span>Offers & cashback<span class="nav-count">4</span></button>
+          <button class="nav-link" data-page="trips"><span class="nav-icon" data-icon="piggy-bank"></span>Travel & savings</button>
         </nav>
 
-        <div class="workspace-label group-label">SHARED</div>
+        <div class="workspace-label group-label">Shared</div>
         <nav class="primary-nav" aria-label="Shared finances">
-          <button class="nav-link" data-page="home"><span class="nav-icon">⌂</span>Shared household</button>
-          <button class="nav-link" data-page="owed"><span class="nav-icon">↔</span>Debts<span class="nav-count muted-count">2</span></button>
+          <button class="nav-link" data-page="home"><span class="nav-icon" data-icon="users"></span>Shared household</button>
+          <button class="nav-link" data-page="owed"><span class="nav-icon" data-icon="arrow-left-right"></span>Debts<span class="nav-count muted-count">2</span></button>
         </nav>
 
         <div class="sidebar-bottom">
           <button class="ai-sidebar-card" data-page="assistant">
-            <span class="ai-spark">✳</span>
-            <span><strong>Financial assistant</strong><small>Automates routine admin</small></span>
-            <span class="side-arrow">↗</span>
+            <span class="ai-icon" data-icon="list-checks"></span>
+            <span><strong>Financial assistant</strong><small id="assistant-note"></small></span>
+            <span class="side-arrow" data-icon="chevron-right"></span>
           </button>
           <button class="profile-button">
             <span class="avatar avatar-photo">CL</span>
             <span class="profile-details"><strong>Caroline Leathem</strong><small>Personal account</small></span>
-            <span class="profile-dots">···</span>
+            <span class="profile-dots" data-icon="ellipsis"></span>
           </button>
         </div>
       </aside>
 
       <main class="main-area">
         <header class="topbar">
-          <button class="mobile-menu" id="mobile-menu" aria-label="Open navigation">☰</button>
+          <button class="mobile-menu" id="mobile-menu" aria-label="Open navigation" data-icon="menu"></button>
           <div class="breadcrumbs"><span>Personal</span><span class="crumb-slash">/</span><strong id="page-crumb">Overview</strong></div>
           <div class="topbar-actions">
             <span class="sync-state"><i></i> Demo workspace</span>
-            <button class="icon-button notification-button" aria-label="Notifications">♧<span></span></button>
+            <button class="icon-button notification-button" aria-label="Notifications"><span class="icon-slot" data-icon="bell"></span><span class="notification-dot"></span></button>
             <button class="avatar avatar-small">CL</button>
           </div>
         </header>
@@ -66,8 +89,8 @@
     <div class="toast-region" id="toast-region" aria-live="polite"></div>
     <dialog class="modal" id="app-modal">
       <form method="dialog" class="modal-card" id="modal-form">
-        <button class="modal-close" value="cancel" formnovalidate aria-label="Close">×</button>
-        <div class="modal-eyebrow" id="modal-eyebrow">QUICK ACTION</div>
+        <button class="modal-close" value="cancel" formnovalidate aria-label="Close" data-icon="x"></button>
+        <div class="modal-eyebrow" id="modal-eyebrow">Quick action</div>
         <h2 id="modal-title">Add an expense</h2>
         <p class="modal-copy" id="modal-copy">Keep your budget up to date.</p>
         <div id="modal-fields"></div>
