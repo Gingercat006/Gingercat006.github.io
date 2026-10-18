@@ -180,7 +180,7 @@ function overviewPage() {
 function budgetPage() {
   const flow = state.budgetView === "flow";
   return `${header("BUDGET · OCTOBER 2026", "Monthly budget", "Planned and actual spending for October.", "Add expense", "expense")}
-    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Money flow</button></div>${flow ? `<span class="view-hint">Hover to magnify · click streams to select one or more</span>` : ""}</div>
+    <div class="view-toolbar"><div class="view-switch" role="group" aria-label="Budget view"><button type="button" data-action="budget-view" data-view="list" aria-pressed="${!flow}">Categories</button><button type="button" data-action="budget-view" data-view="flow" aria-pressed="${flow}">Flowchart</button></div>${flow ? `<span class="view-hint">Hover to magnify · click streams to select one or more</span>` : ""}</div>
     ${flow ? flowMarkup() : budgetListMarkup()}`;
 }
 
@@ -372,7 +372,7 @@ function drawFlow(d) {
   ];
 
   flow.style.height = `${H}px`;
-  flow.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Money flow: ${pounds(incSum)} income and ${pounds(d.balance)} opening balance, ${pounds(expSum)} expenditure, savings target ${met ? "met" : "not yet met"}."><defs><pattern id="flow-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" style="fill:var(--ghost-bg)"/><rect width="2.5" height="7" style="fill:var(--ghost)"/></pattern></defs><g>${ribs}</g><g>${nodes}</g></svg>${labels}`;
+  flow.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Flowchart: ${pounds(incSum)} income and ${pounds(d.balance)} opening balance, ${pounds(expSum)} expenditure, savings target ${met ? "met" : "not yet met"}."><defs><pattern id="flow-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" style="fill:var(--ghost-bg)"/><rect width="2.5" height="7" style="fill:var(--ghost)"/></pattern></defs><g>${ribs}</g><g>${nodes}</g></svg>${labels}`;
   // Freshly drawn nodes take their focus and lens state without animating in.
   flow.classList.add("drawing");
   if (applyFlowFocus()) renderHistory();
